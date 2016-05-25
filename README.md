@@ -1,3 +1,3 @@
-# docs
+The documents contained in this repository focus on building out the Hyperledger Fabric environment on Linux on z Systems.
 
-This repository contains all documented procedures to build an infrastructure for the Hyperledger Fabric project
+
