@@ -381,7 +381,7 @@ Golang **bin** directory to your **PATH**.
     ```
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy "
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
