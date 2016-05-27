@@ -75,10 +75,11 @@ RHEL 7.x.
 > choice.
 
 1.  Install the dependencies:
+
     ```
     sudo yum install -y git wget tar gcc bzip2
     ```
-2.  Create a directory for the amd64 version of the Golang toolchain:
+2.  Create a directory for the amd64 version of the Golang toolchain:\
     ```
     mkdir -p /<work_dir>/go1.5.2
     cd /<work_dir>/go1.5.2
