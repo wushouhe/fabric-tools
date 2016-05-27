@@ -70,10 +70,6 @@ To build the Golang bootstrap tool you will need to use an
 Intel/AMD-based machine running an up-to-date version of Linux, e.g.,
 RHEL 7.x.
 
-> ***NOTE:*** The directory **/\<work_dir\>/** used in these
-> instructions represents a temporary writeable directory of your
-> choice.
-
 1.  Install the dependencies:
 
     ```
@@ -82,8 +78,8 @@ RHEL 7.x.
 2.  Create a directory for the amd64 version of the Golang toolchain:
 
     ```
-    mkdir -p /<work_dir>/go1.5.2
-    cd /<work_dir>/go1.5.2
+    mkdir -p $HOME/go1.5.2
+    cd $HOME/go1.5.2
     ```
 3.  Download the amd64 Golang toolchain binary and extract it:
 
@@ -98,25 +94,25 @@ RHEL 7.x.
 4.  Clone the source code for the z Systems port of Golang:
 
     ```
-    cd /<work_dir>/
+    cd $HOME/
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
 5.  Build the bootstrap tool:
 
     ```
-    export GOROOT_BOOTSTRAP=/<work_dir>/go1.5.2/go
-    cd /<work_dir>/go/src
+    export GOROOT_BOOTSTRAP=$HOME/go1.5.2/go
+    cd $HOME/go/src
     GOOS=linux GOARCH=s390x ./bootstrap.bash
     ```
 The bootstrap tool is placed into a bzip tarball named
-**go-linux-s390x-bootstrap.tbz** located in **/\<work_dir\>/** and
+**go-linux-s390x-bootstrap.tbz** located in **$HOME** and
 is used in the next step to compile the Golang programming language
 source code on Linux on z Systems.
 
 Building the Golang Toolchain
 -----------------------------
 To build the Golang toolchain you need to have successfully built the
-Golang bootstrap tool outlined in the Cross-Compiling the Bootstrap Tool
+Golang bootstrap tool outlined in the [Cross-Compiling the Bootstrap Tool](#cross-compiling-the-bootstrap-tool)
 section of this document. After building the bootstrap tool, login to
 your Linux on z Systems machine and perform the steps below.
 
@@ -125,36 +121,30 @@ your Linux on z Systems machine and perform the steps below.
     ```
     sudo yum install -y git gcc
     ```
-2.  If you do not have a home directory that is shared (e.g., via NFS)
-    with the AMD64/Intel machine, then scp or ftp
-    **/\<work_dir\>/go-linux-s390x-bootstrap.tbz** from the
-    AMD64/Intel machine to **/\<work_dir\>/** on the Linux on z
-    Systems machine, and clone the source again:
+2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
 
     ```
-    mkdir /<work_dir>/
-    cd /<work_dir>/
-    # scp/ftp /<work_dir>/go-linux-s390x-bootstrap.tbz from the AMD64/Intel system
+    cd $HOME
+    # scp/ftp $HOME/go-linux-s390x-bootstrap.tbz from the x86 system to $HOME on your Linux on z Systems instance
     tar -xf go-linux-s390x-bootstrap.tbz
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
-3.  Build the Golang toolchain on z Systems and run all tests.
+3.  Build the Golang toolchain on Linux on z Systems and run all tests.
 
     ```
-    export GOROOT_BOOTSTRAP=/<work_dir>/go-linux-s390x-bootstrap
-    cd /<work_dir>/go/src
+    export GOROOT_BOOTSTRAP=$HOME/go-linux-s390x-bootstrap
+    cd $HOME/go/src
     ./all.bash
     ```
     > ***NOTE:*** If most of the tests pass then the Golang toolchain probably
     > compiled OK and you can proceed to the next step.
 
 4. Copy the Golang directory to the final install directory,
-**/\<golang_home\>/**, and permanently update your **PATH**
-environment variable to use the new toolchain. Now you can compile
-Golang programs on Linux on z Systems.
+**\<golang_home\>**, and permanently update your **PATH**
+environment variable to use the new toolchain.
 
     ```
-    sudo cp -ra /<work_dir>/go /<golang_home>/
+    sudo cp -ra $HOME/go /<golang_home>/
     # Also add the following lines to ~/.bash_profile
     export PATH=/<golang_home>/go/bin:$PATH
     ```
@@ -234,9 +224,6 @@ Systems Docker daemons, which will allow the use of the same unaltered
 Dockerfile contents used by the Docker daemon on the x86 platform. This
 eliminates source code changes to the Hyperledger fabric code.
 
-***NOTE:*** The directory **/\<work_dir\>/** used in these
-instructions represents a temporary writeable directory of your choice.
-
 1.  Install the dependencies:
     ```
     sudo yum install -y git make
@@ -249,29 +236,29 @@ instructions represents a temporary writeable directory of your choice.
 2.  Create a distribution directory and clone the source code:
 
     ```
-    mkdir -p /<work_dir>/src/github.com/docker
-    cd /<work_dir>/src/github.com/docker
+    mkdir -p $HOME/src/github.com/docker
+    cd $HOME/src/github.com/docker
     git clone https://github.com/docker/distribution.git
-    cd /<work_dir>/src/github.com/docker/distribution
+    cd $HOME/src/github.com/docker/distribution
     git checkout v2.3.0
     ```
 3.  Set **GOPATH** and **DISTRIBUTION_DIR** environment variables:
 
     ```
-    export DISTRIBUTION_DIR=/<work_dir>/src/github.com/docker/distribution
-    export GOPATH=/<work_dir>/
+    export DISTRIBUTION_DIR=$HOME/src/github.com/docker/distribution
+    export GOPATH=$HOME
     export GOPATH=$DISTRIBUTION_DIR/Godeps/_workspace:$GOPATH
     ```
 4. Build the distribution binaries:
 
     ```
-    cd /<work_dir>/src/github.com/docker/distribution
-    make PREFIX=/<work_dir>/ clean binaries
+    cd $HOME/src/github.com/docker/distribution
+    make PREFIX=$HOME clean binaries
     ```
 5.  Run the Test Suite:
 
     ```
-    make PREFIX=/<work_dir>/ test
+    make PREFIX=$HOME test
     ```
 6.  Start the Docker Registry:
 
@@ -307,7 +294,7 @@ instructions represents a temporary writeable directory of your choice.
     d) Start the Docker Registry:
 
     ```
-    /<work_dir>/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
+    $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
     ```
 For a more permanent solution when starting the Docker Registry:
 
@@ -317,7 +304,7 @@ For a more permanent solution when starting the Docker Registry:
     ```
     sudo mkdir /etc/docker-registry
     sudo cp $DISTRIBUTION_DIR/cmd/registry/config.yml /etc/docker-registry
-    sudo cp /<work_dir>/bin/registry /usr/local/bin
+    sudo cp $HOME/bin/registry /usr/local/bin
     ```
 
 2.  Create a shell script in **/usr/local/bin** to start the Docker
@@ -344,9 +331,6 @@ RocksDB is an embeddable persistent key-value store for fast storage and
 is used by the Hyperledger Fabric peer, membership and security service
 components.
 
-***NOTE:*** The directory **/\<work_dir\>/** used in these
-instructions represents a temporary writeable directory of your choice.
-
 1.  RocksDB is written using the C++ programming language. Make sure
     that the C++ compiler is installed:
 
@@ -356,28 +340,25 @@ instructions represents a temporary writeable directory of your choice.
 2.  Download and build RocksDB:
 
     ```
-    cd /<work_dir>/
+    cd $HOME
     git clone --branch v4.5.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
-    sed -i -e "s/-march=native/-march=z196/" build_tools/build_detect_platform
+    sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
     make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
     ```
 3.  Delete the rocksdb build directory:
 
     ```
-    rm -rf /<work_dir>/rocksdb
+    rm -rf $HOME/rocksdb
     ```
 
 Build the Hyperledger Fabric Core
 =================================
-The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and
-certificate authority tasks.
+The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
-***NOTE:*** The directory **/\<work_dir\>/** used in these
-instructions represents the location of the Hyperledger Fabric source
-code. The **/\<golang_home\>/go** directory represents where Golang
-was installed after performing step 4 in Building the Golang Toolchain.
+***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
+was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
 If you built Golang using this document, you have already added the
 Golang **bin** directory to your **PATH**.
 
@@ -390,9 +371,9 @@ Golang **bin** directory to your **PATH**.
 2.  Download the Hyperledger Fabric code into a writeable directory:
 
     ```
-    mkdir -p /<work_dir>/src/github.com/hyperledger
+    mkdir -p $HOME/src/github.com/hyperledger
     export GOPATH=<work_dir>
-    cd /<work_dir>/src/github.com/hyperledger
+    cd $HOME/src/github.com/hyperledger
     git clone https://github.com/hyperledger/fabric.git
     cd fabric
     ```
@@ -405,10 +386,7 @@ Golang **bin** directory to your **PATH**.
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 2 and 3 to your **.bash_profile**
-    > file. The **LD_LIBRARY_PATH** variable must be set when executing
-    > the peer or membership and security services executable binaries, and
-    > therefore, should be set in your **.bash_profile** file.
+    > environment variables in steps 2 and 3 to your **.bash_profile** file.
 
 4.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating or non-validating peer nodes and the membersrvc
@@ -430,18 +408,15 @@ background and re-direct logging output to a file.
 
     ```bash
     #!/bin/bash
-    export LD_LIBRARY_PATH=/opt/rocksdb
-    cd /<work_dir>/src/github.com/hyperledger/fabric/peer
-    ./peer node start --logging-level=debug > /var/log/fabric-peer.log
-    2>&1 &
+    cd $HOME/src/github.com/hyperledger/fabric/peer
+    ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
     ```
 2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
     with the executable attribute set:
 
     ```bash
     #!/bin/bash
-    export LD_LIBRARY_PATH=/opt/rocksdb
-    cd /<work_dir>/src/github.com/hyperledger/fabric/membersrvc
+    cd $HOME/src/github.com/hyperledger/fabric/membersrvc
     ./membersrvc > /var/log/membersrvc.log 2>&1 &
     ```
 
@@ -505,7 +480,7 @@ Build a Base RHEL Docker Image
     sudo mkimage-yum.sh rhelbase
     ```
 5.  Obtain the **rhelbase** Docker image’s **TAG**.
-    The **rhelbase:<TAG>** is required to build the Golang
+    The **rhelbase:\<TAG\>** is required to build the Golang
     toolchain Docker image:
 
     ```
@@ -516,24 +491,19 @@ Build a Base RHEL Docker Image
     >
     > In the example below the TAG is 7.2.
     >
-    > ![](./media/image4.tmp)
+    > ![](./media/docker-images.jpg)
     >
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
     >  
     > **docker tag rhelbase:\<TAG\>  
     > \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>  
-    > docker push \<docker_registry_host_ip\>:5050/rhelbase:<TAG>**
+    > docker push \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>**
 
 Build a Golang Toolchain Docker Image from the Base RHEL Docker Image
 ---------------------------------------------------------------------
 Once the base RHEL Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
-
->***NOTE:*** The directory **/\<work_dir\>/** used in these
->instructions represents a temporary writeable directory of your choice.
->The same **/\<work_dir\>/** used in the creating of the Golang
->toolchain in section Building the Golang Toolchain should be used here.
 
 1.  Make sure that the Docker Daemon and Docker Registry have
     been started. Refer to Installing the Docker Client / Daemon and
@@ -543,14 +513,14 @@ to build a Golang toolchain Docker image:
 2.  Create a Dockerfile:
 
     ```
-    cd /<work_dir>/
+    cd $HOME
     vi Dockerfile
     ```
 3. Cut and paste the following lines into your Dockerfile and then save
 the file:
 
     ```
-    FROM rhelbase:**<TAG>**
+    FROM rhelbase:<TAG>
     RUN yum -y groupinstall "Development Tools"
     COPY go /usr/local/go
     ENV GOPATH=/opt/gopath
@@ -559,20 +529,20 @@ the file:
     RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
     WORKDIR $GOPATH
     ```
-    > ***NOTE:*** Replace **<TAG>** with the TAG value obtained above in
-    > step 5 of Build a Base RHEL Docker Image.
+    > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
+    > step 5 of [Build a Base RHEL Docker Image](#build-a-base-rhel-docker-image).
 
 4.  Make sure that a copy of the **go** directory is in your
-    **/\<work_dir\>/** directory. If you used the same
-    **/\<work_dir\>/** directory when performing the instructions
-    in section Building the Golang Toolchain then you should already
-    have your built **go** directory contained in
-    **/\<work_dir\>/**.
+    **$HOME** directory. If you used the
+    **$HOME** directory when performing the instructions
+    in section [Building the Golang Toolchain](#building-the-golang-toolchain)
+    then you should already have your built **go** directory contained in
+    **$HOME**.
 
 5.  Issue the **docker build** command:
 
     ```
-    cd /<work_dir>/
+    cd $HOME
     docker build -t <docker_registry_host_ip>:5050/s390x/golang -f <docker_file> .
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
@@ -596,12 +566,10 @@ the file:
     Docker image when executing Chaincode transactions:
 
     ```
-    cd /<work_dir>/src/github.com/hyperledger/fabric/peer
+    cd $HOME/src/github.com/hyperledger/fabric/peer
     vi core.yaml
     ```
-    > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core).  
-    > Replace the **chaincode.golang.Dockerfile** parameter (located within
+    > ***NOTE:*** Replace the **chaincode.golang.Dockerfile** parameter (located within
     > lines 280-290) with the following:
 
     ```
@@ -625,17 +593,15 @@ to build their respective Docker images.
 1.  Update the Hyperledger Fabric’s core.yaml file and save:
 
     ```
-    cd /<work_dir>/src/github.com/hyperledger/fabric/peer
+    cd $HOME/src/github.com/hyperledger/fabric/peer
     vi core.yaml
     ```
-    > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core).
 
 2. Replace the **peer.Dockerfile** parameter (located within lines 90-100) with the following:
 
     ```
     Dockerfile: |
-    from **<docker_registry_host_ip>**:5050/s390x/golang
+    from <docker_registry_host_ip>:5050/s390x/golang
     # Install RocksDB
     RUN cd /opt && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
     WORKDIR /opt/rocksdb
@@ -656,13 +622,11 @@ to build their respective Docker images.
 3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
 
     ```
-    cd /<work_dir>/src/github.com/hyperledger/fabric/core/container
+    cd $HOME/src/github.com/hyperledger/fabric/core/container
     go test -timeout=20m -run BuildImage_Peer
     go test -timeout=20m -run BuildImage_Obcca
     ```
-    > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core). Both of the images are
-    > also built when running the Unit Tests.
+    > ***NOTE:*** Both of the images are also built when running the Unit Tests.
 
 4.  Verify that the **hyperledger-peer** and **membersrvc** images are
     displayed after issuing a **docker images** command:
@@ -680,7 +644,7 @@ to invoking the unit tests.
 Test File Changes
 -----------------
 1.  Edit
-    **/\<work_dir\>/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
+    **$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
     and replace the **peer.Dockerfile** parameter with the following:
 
     ```
@@ -701,27 +665,25 @@ Test File Changes
     RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
 2.  Edit
-    **/\<work_dir\>/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
+    **$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
     and replace the **chaincode.golang.Dockerfile** parameter with the
     following:
 
     ```
     Dockerfile: |
-    from **<docker_registry_host_ip>**:5050/s390x/golang
+    from <docker_registry_host_ip>:5050/s390x/golang
     COPY src $GOPATH/src
     WORKDIR $GOPATH
     ```
 
 3.  Perform steps 1 and 2 for file
-    **/\<work_dir\>/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml.**
+    **$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml.**
 
 4.  Edit
-    **/\<work_dir\>/src/github.com/hyperledger/fabric/core/container/controller_test.go**
+    **$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go**
     and replace **busybox** with **s390x/busybox**.
 
-> ***NOTE:*** The **/\<work_dir\>/** directory was established in
-> Build the Hyperledger Fabric Core. Replace
-> **<docker_registry_host_ip>** with the IP address of the host
+> ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
 > that is running your Docker Registry.
 
 Running the Unit Tests
@@ -731,36 +693,33 @@ Running the Unit Tests
     the Hyperledger Fabric components and start the Fabric Peer:
 
 ```
-cd /<work_dir>/src/github.com/hyperledger/fabric/peer
-sudo LD_LIBRARY_PATH=/opt/rocksdb:$LD_LIBRARY_PATH ./peer node
-start
+cd $HOME/src/github.com/hyperledger/fabric/peer
+sudo ./peer node start
 ```
 
 2.  From another window of the same Linux system, create an executable
-    script called **unit-tests.sh** in **/\<work_dir\>/** using the
+    script called **unit-tests.sh** in **$HOME** using the
     following lines:
 
     ```bash
     #!/bin/bash
-    export GOPATH=/<work_dir>/
+    export GOPATH=$HOME
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz "
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lsnappy"
     export CGO_CFLAGS=" "
     go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep-v /vendor/ | grep -v /examples/)
     ```
     > ***NOTE:*** If you have root access and would like to run the unit
     > tests, simply set the environment variables listed above and then
-    > issue the go test command. Also, replace **/\<work_dir\>/** with
-    > the directory used when building the Hyperledger Fabric components in
-    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-core). Replace
-    > **/\<golang_home\>/** with the directory where Golang was
+    > issue the go test command. Replace
+    > **\<golang_home\>** with the directory where Golang was
     > installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
 
 3.  Invoke the unit-tests.sh script:
 
     ```
-    cd /<work_dir>/
+    cd $HOME
     sudo ./unit-tests.sh
     ```
 
@@ -771,7 +730,7 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 To run the Behave tests:
 
 ```
-cd $GOPATH/src/github.com/hyperledger/fabric/bddtests
+cd $HOME/src/github.com/hyperledger/fabric/bddtests
 behave
 ```
 
