@@ -241,8 +241,8 @@ instructions represents a temporary writeable directory of your choice.
     ```
     sudo yum install -y git make
     ```
-    > ***NOTE:*** Golang is required to build the Docker Registry. See Building Golang
-    > on page 2 to build the Golang toolchain. You may have already
+    > ***NOTE:*** Golang is required to build the Docker Registry. See [Building Golang](#building-golang)
+    > to build the Golang toolchain. You may have already
     > installed the **git** and **make** packages when building Golang. If
     > so, ignore the installation of the packages within this step.
 
@@ -600,8 +600,7 @@ the file:
     vi core.yaml
     ```
     > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > Build the Hyperledger Fabric Core on page 9.
-    >
+    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core).  
     > Replace the **chaincode.golang.Dockerfile** parameter (located within
     > lines 280-290) with the following:
 
@@ -630,7 +629,7 @@ to build their respective Docker images.
     vi core.yaml
     ```
     > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > Build the Hyperledger Fabric Core on page 9.
+    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core).
 
 2. Replace the **peer.Dockerfile** parameter (located within lines 90-100) with the following:
 
@@ -662,7 +661,7 @@ to build their respective Docker images.
     go test -timeout=20m -run BuildImage_Obcca
     ```
     > ***NOTE:*** The **/\<work_dir\>/** directory was established in
-    > Build the Hyperledger Fabric Core on page 9. Both of the images are
+    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-fabric-core). Both of the images are
     > also built when running the Unit Tests.
 
 4.  Verify that the **hyperledger-peer** and **membersrvc** images are
@@ -754,9 +753,9 @@ start
     > tests, simply set the environment variables listed above and then
     > issue the go test command. Also, replace **/\<work_dir\>/** with
     > the directory used when building the Hyperledger Fabric components in
-    > Build the Hyperledger Fabric Core on page 9. Replace
+    > [Build the Hyperledger Fabric Core](#build-the-hyperledger-core). Replace
     > **/\<golang_home\>/** with the directory where Golang was
-    > installed after performing step 4 in Building the Golang Toolchain.
+    > installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
 
 3.  Invoke the unit-tests.sh script:
 
