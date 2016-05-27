@@ -365,8 +365,7 @@ Golang **bin** directory to your **PATH**.
 1.  Install pre-req packages:
 
     ```
-    sudo yum -y install zlib zlib-devel snappy snappy-devel bzip2
-    bzip2-devel
+    sudo yum -y install zlib zlib-devel snappy snappy-devel bzip2 bzip2-devel
     ```
 2.  Download the Hyperledger Fabric code into a writeable directory:
 
@@ -382,7 +381,7 @@ Golang **bin** directory to your **PATH**.
     ```
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lsnappy "
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy "
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
@@ -706,7 +705,7 @@ sudo ./peer node start
     export GOPATH=$HOME
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lsnappy"
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
     go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep-v /vendor/ | grep -v /examples/)
     ```
