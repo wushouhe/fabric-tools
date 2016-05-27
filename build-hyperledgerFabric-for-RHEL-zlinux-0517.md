@@ -134,8 +134,7 @@ your Linux on z Systems machine and perform the steps below.
     ```
     mkdir /<work_dir>/
     cd /<work_dir>/
-    scp/ftp /<work_dir>/go-linux-s390x-bootstrap.tbz from the
-    AMD64/Intel system
+    # scp/ftp /<work_dir>/go-linux-s390x-bootstrap.tbz from the AMD64/Intel system
     tar -xf go-linux-s390x-bootstrap.tbz
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
@@ -521,10 +520,10 @@ Build a Base RHEL Docker Image
     >
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
-    > **docker tag rhelbase:<TAG>
-    > <docker_registry_host_ip>:5050/rhelbase:<TAG>
-    > docker push
-    > <docker_registry_host_ip>:5050/rhelbase:<TAG>**
+    >  
+    > **docker tag rhelbase:\<TAG\>  
+    > \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>  
+    > docker push \<docker_registry_host_ip\>:5050/rhelbase:<TAG>**
 
 Build a Golang Toolchain Docker Image from the Base RHEL Docker Image
 ---------------------------------------------------------------------
@@ -765,3 +764,16 @@ start
     cd /<work_dir>/
     sudo ./unit-tests.sh
     ```
+
+Behave Tests
+============
+A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
+
+To run the Behave tests:
+
+```
+cd $GOPATH/src/github.com/hyperledger/fabric/bddtests
+behave
+```
+
+The Behave tests were originally writeen to run in an Ubuntu environment.  Since this document created RHEL-based artifacts, there is a possibility that a number of the Behave tests will fail.
