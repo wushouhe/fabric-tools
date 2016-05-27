@@ -70,7 +70,7 @@ To build the Golang bootstrap tool you will need to use an
 Intel/AMD-based machine running an up-to-date version of Linux, e.g.,
 RHEL 7.x.
 
-> ***NOTE:*** The directory **/<work_dir>/** used in these
+> ***NOTE:*** The directory **/\<work_dir\>/** used in these
 > instructions represents a temporary writeable directory of your
 > choice.
 
