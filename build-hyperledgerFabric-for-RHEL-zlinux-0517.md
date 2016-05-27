@@ -1,4 +1,4 @@
-Building Hyperledger Fabric for RHEL on Linux on System z
+Hyperledger Fabric Build for RHEL on Linux on z Systems
 =========================================================
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
@@ -106,7 +106,6 @@ RHEL 7.x.
     cd /<work_dir>/go/src
     GOOS=linux GOARCH=s390x ./bootstrap.bash
     ```
-
 The bootstrap tool is placed into a bzip tarball named
 **go-linux-s390x-bootstrap.tbz** located in **/<work_dir>/** and
 is used in the next step to compile the Golang programming language
@@ -120,52 +119,42 @@ section of this document. After building the bootstrap tool, login to
 your Linux on z Systems machine and perform the steps below.
 
 1.  Install the dependencies.
-
-sudo yum install -y git gcc
-
-1.  If you do not have a home directory that is shared (e.g., via NFS)
+    ```
+    sudo yum install -y git gcc
+    ```
+2.  If you do not have a home directory that is shared (e.g., via NFS)
     with the AMD64/Intel machine, then scp or ftp
     **/<work_dir>/go-linux-s390x-bootstrap.tbz** from the
     AMD64/Intel machine to **/<work_dir>/** on the Linux on z
     Systems machine, and clone the source again:
+    ```
+    mkdir /<work_dir>/
+    cd /<work_dir>/
+    scp/ftp /<work_dir>/go-linux-s390x-bootstrap.tbz from the
+    AMD64/Intel system
+    tar -xf go-linux-s390x-bootstrap.tbz
+    git clone https://github.com/linux-on-ibm-z/go.git
+    ```
+3.  Build the Golang toolchain on z Systems and run all tests.
+    ```
+    export GOROOT_BOOTSTRAP=/<work_dir>/go-linux-s390x-bootstrap
+    cd /<work_dir>/go/src
+    ./all.bash
+    ```
+    > **NOTE:** If most of the tests pass then the Golang toolchain probably
+    > compiled OK and you can proceed to the next step.
 
-mkdir /<work_dir>/
-
-cd /<work_dir>/
-
-\# scp/ftp /<work_dir>/go-linux-s390x-bootstrap.tbz from the
-AMD64/Intel system
-
-tar -xf go-linux-s390x-bootstrap.tbz
-
-git clone https://github.com/linux-on-ibm-z/go.git
-
-1.  Build the Golang toolchain on z Systems and run all tests.
-
-export GOROOT_BOOTSTRAP=/<work_dir>/go-linux-s390x-bootstrap
-
-cd /<work_dir>/go/src
-
-./all.bash
-
-> **NOTE:** If most of the tests pass then the Golang toolchain probably
-> compiled OK and you can proceed to the next step.
-
-1.  <span id="_Ref447966526" class="anchor"></span>Copy the Golang
-    directory to the final install directory,
-    **/<golang_home>/**, and permanently update your **PATH**
-    environment variable to use the new toolchain. Now you can compile
-    Golang programs on Linux on z Systems.
-
-sudo cp -ra /<work_dir>/go /<golang_home>/
-
-\# Also add the following lines to **\~/.bash_profile**
-
-export PATH=/<golang_home>/go/bin:\$PATH
-
+4. Copy the Golang directory to the final install directory,
+**/<golang_home>/**, and permanently update your **PATH**
+environment variable to use the new toolchain. Now you can compile
+Golang programs on Linux on z Systems.
+    ```
+    sudo cp -ra /<work_dir>/go /<golang_home>/
+    Also add the following lines to **\~/.bash_profile**
+    export PATH=/<golang_home>/go/bin:\$PATH
+    ```
 Docker
 ======
-
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
@@ -178,9 +167,8 @@ A Docker registry is required for the Hyperledger Fabric environment and
 the process to build your own Docker registry from source is described
 below.
 
-<span id="_Ref448174147" class="anchor"><span id="_Toc451280640" class="anchor"></span></span>Installing the Docker Client / Daemon
-------------------------------------------------------------------------------------------------------------------------------------
-
+Installing the Docker Client / Daemon
+-------------------------------------
 Refer to [Linux on z Systems Docker installation
 instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
 for downloading and installing the RHEL distribution of Docker on Linux
