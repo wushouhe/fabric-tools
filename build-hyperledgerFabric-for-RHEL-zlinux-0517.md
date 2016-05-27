@@ -1,3 +1,5 @@
+Abstract
+========
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
 technology, Hyperledger Fabric, on the Linux on z Systems platform.
@@ -12,18 +14,12 @@ kept in a repository that you create, thus remaining within your
 control.
 
 The major components include:
-
-Golang programming language
-
-Docker client and daemon
-
-Docker registry
-
-Hyperledger Fabric
-
-Peer
-
-Membership and Security Services
+- Golang programming language
+- Docker client and daemon
+- Docker registry
+- Hyperledger Fabric
+  - Peer
+  - Membership and Security Services
 
 Once all of the major components are built, custom Docker images are
 created for the Golang programming language, Hyperledger Fabric Peer,
@@ -39,8 +35,8 @@ may become obsolete or out of date.
 For more information about the Hyperledger Fabric project, see
 <https://github.com/hyperledger/fabric>.
 
-<span id="_Ref447909806" class="anchor"><span id="_Toc451280636" class="anchor"></span></span>Building Golang
-=============================================================================================================
+Building Golang
+===============
 
 The Hyperledger Fabric and the Docker Registry are written using the
 Golang programming language. Therefore, a Golang compiler needs to be
@@ -186,7 +182,7 @@ A Docker registry is required for the Hyperledger Fabric environment and
 the process to build your own Docker registry from source is described
 below.
 
-<span id="_Ref448174147" class="anchor"><span id="_Toc451280640" class="anchor"></span></span>Installing the Docker Client / Daemon 
+<span id="_Ref448174147" class="anchor"><span id="_Toc451280640" class="anchor"></span></span>Installing the Docker Client / Daemon
 ------------------------------------------------------------------------------------------------------------------------------------
 
 Refer to [Linux on z Systems Docker installation
