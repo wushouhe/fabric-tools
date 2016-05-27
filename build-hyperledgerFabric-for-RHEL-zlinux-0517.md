@@ -80,11 +80,13 @@ RHEL 7.x.
     sudo yum install -y git wget tar gcc bzip2
     ```
 2.  Create a directory for the amd64 version of the Golang toolchain:\
+
     ```
     mkdir -p /<work_dir>/go1.5.2
     cd /<work_dir>/go1.5.2
     ```
 3.  Download the amd64 Golang toolchain binary and extract it:
+
     ```
     wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
     tar -xvf go1.5.2.linux-amd64.tar.gz
@@ -94,11 +96,13 @@ RHEL 7.x.
 > tar flag.
 
 4.  Clone the source code for the z Systems port of Golang:
+
     ```
     cd /<work_dir>/
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
 5.  Build the bootstrap tool:
+
     ```
     export GOROOT_BOOTSTRAP=/<work_dir>/go1.5.2/go
     cd /<work_dir>/go/src
@@ -117,6 +121,7 @@ section of this document. After building the bootstrap tool, login to
 your Linux on z Systems machine and perform the steps below.
 
 1.  Install the dependencies.
+
     ```
     sudo yum install -y git gcc
     ```
@@ -125,6 +130,7 @@ your Linux on z Systems machine and perform the steps below.
     **/<work_dir>/go-linux-s390x-bootstrap.tbz** from the
     AMD64/Intel machine to **/<work_dir>/** on the Linux on z
     Systems machine, and clone the source again:
+
     ```
     mkdir /<work_dir>/
     cd /<work_dir>/
@@ -134,6 +140,7 @@ your Linux on z Systems machine and perform the steps below.
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
 3.  Build the Golang toolchain on z Systems and run all tests.
+
     ```
     export GOROOT_BOOTSTRAP=/<work_dir>/go-linux-s390x-bootstrap
     cd /<work_dir>/go/src
@@ -146,11 +153,13 @@ your Linux on z Systems machine and perform the steps below.
 **/<golang_home>/**, and permanently update your **PATH**
 environment variable to use the new toolchain. Now you can compile
 Golang programs on Linux on z Systems.
+
     ```
     sudo cp -ra /<work_dir>/go /<golang_home>/
     Also add the following lines to **\~/.bash_profile**
     export PATH=/<golang_home>/go/bin:\$PATH
     ```
+
 Docker
 ======
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
