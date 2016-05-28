@@ -661,8 +661,8 @@ Test File Changes
       WORKDIR /opt/rocksdb
       RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
       RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
       RUN yum -y install snappy-devel zlib-devel bzip2-devel
+      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
