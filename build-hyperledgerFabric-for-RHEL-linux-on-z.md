@@ -650,7 +650,7 @@ to invoking the unit tests.
 Test File Changes
 -----------------
 1.  Edit
-    **$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
+    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **peer.Dockerfile** parameter with the following:
 
     ```
@@ -671,7 +671,7 @@ Test File Changes
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
 2.  Edit
-    **$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml**
+    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **chaincode.golang.Dockerfile** parameter with the
     following:
 
@@ -683,10 +683,10 @@ Test File Changes
     ```
 
 3.  Perform steps 1 and 2 for file
-    **$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml.**
+    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml.*
 
 4.  Edit
-    **$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go**
+    *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
     and replace **busybox** with **s390x/busybox**.
 
 > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
@@ -709,18 +709,20 @@ sudo ./peer node start
 
     ```bash
     #!/bin/bash
-    export GOPATH=$HOME
+    export GOPATH=<parent-directory>
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
     export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
-    go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep-v /vendor/ | grep -v /examples/)
+    cd <parent-directory>/src/github/hyperledger/fabric
+    go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
     ```
     > ***NOTE:*** If you have root access and would like to run the unit
     > tests, simply set the environment variables listed above and then
     > issue the go test command. Replace
     > **\<golang_home\>** with the directory where Golang was
     > installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
+    > Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
 
 3.  Invoke the unit-tests.sh script:
 
