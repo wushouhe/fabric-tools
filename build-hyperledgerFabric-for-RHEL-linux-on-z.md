@@ -139,8 +139,6 @@ your Linux on z Systems instance and perform the steps below.
     cd $HOME/go/src
     ./all.bash
     ```
-    > ***NOTE:*** If most of the tests pass then the Golang toolchain probably
-    > compiled OK and you can proceed to the next step.
 
 4. Copy the Golang directory to the final install directory,
 **\<golang_home\>**, and permanently update your **PATH**
