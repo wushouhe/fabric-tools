@@ -88,9 +88,6 @@ RHEL 7.x.
     wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
     tar -xvf go1.5.2.linux-amd64.tar.gz
     ```
-> ***NOTE:*** Even though the file name indicates that it is a *gzipped*
-> file, it is just a regular tar file. There is no need to use the **z**
-> tar flag.
 
 4.  Clone the source code for the z Systems port of Golang:
 
