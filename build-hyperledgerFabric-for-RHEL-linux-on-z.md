@@ -56,9 +56,9 @@ Building Golang for Linux on z Systems is a two-step process:
 > **/etc/sudoers** file to enable the **wheel** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
 > will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of Building the Golang
-> Toolchain. Otherwise, if you have root access… Great! No need to worry
-> about this.
+> The targeted directory is set in step 4 of [Building the Golang
+> Toolchain](building-the-golang-toolchain). Otherwise, if you have root access…
+> Great! No need to worry about this.
 
 For information on how the Golang bootstrapping process works, see the
 blog entry at
@@ -67,8 +67,8 @@ blog entry at
 Cross-Compiling the Bootstrap Tool
 ----------------------------------
 To build the Golang bootstrap tool you will need to use an
-Intel/AMD-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x.
+x86-based machine running an up-to-date version of Linux, e.g.,
+RHhEL 7.x.
 
 1.  Install the dependencies:
 
@@ -94,7 +94,7 @@ RHEL 7.x.
 4.  Clone the source code for the z Systems port of Golang:
 
     ```
-    cd $HOME/
+    cd $HOME
     git clone https://github.com/linux-on-ibm-z/go.git
     ```
 5.  Build the bootstrap tool:
@@ -114,7 +114,7 @@ Building the Golang Toolchain
 To build the Golang toolchain you need to have successfully built the
 Golang bootstrap tool outlined in the [Cross-Compiling the Bootstrap Tool](#cross-compiling-the-bootstrap-tool)
 section of this document. After building the bootstrap tool, login to
-your Linux on z Systems machine and perform the steps below.
+your Linux on z Systems instance and perform the steps below.
 
 1.  Install the dependencies.
 
@@ -125,9 +125,11 @@ your Linux on z Systems machine and perform the steps below.
 
     ```
     cd $HOME
-    # scp/ftp $HOME/go-linux-s390x-bootstrap.tbz from the x86 system to $HOME on your Linux on z Systems instance
+    # scp or ftp $HOME/go-linux-s390x-bootstrap.tbz from the x86 system to $HOME on your Linux on z Systems instance
     tar -xf go-linux-s390x-bootstrap.tbz
     git clone https://github.com/linux-on-ibm-z/go.git
+    cd $HOME/go
+    git checkout release-branch.go1.6
     ```
 3.  Build the Golang toolchain on Linux on z Systems and run all tests.
 
@@ -184,9 +186,7 @@ shell script has the executable attribute set.
 
     ```
     #!/bin/bash
-    /usr/local/bin/docker daemon -H tcp://0.0.0.0:2375 -H
-    unix:///var/run/docker.sock --insecure-registry localhost:5050 >
-    /var/log/docker.log 2>&1 &
+    /usr/local/bin/docker daemon -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050 > /var/log/docker.log 2>&1 &
     ```
     > ***NOTE:*** If your Docker Registry is running on another system, change
     > **localhost** to either the hostname or IP address of the system
@@ -209,7 +209,9 @@ shell script has the executable attribute set.
     > needs to be created and the non-root user needs to be added to the
     > docker group:  
     > **sudo groupadd docker**  
-    > **sudo usermod -a -G docker \<non-root-user\>**
+    > **sudo usermod -a -G docker \<non-root-user\>**  
+    >
+    > The \<non-root-user\> will have to logout and then login to pick up the change. 
 
 Building the Docker Registry
 ----------------------------
