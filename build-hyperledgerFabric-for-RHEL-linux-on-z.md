@@ -753,5 +753,3 @@ To run the Behave tests:
 cd $HOME/src/github.com/hyperledger/fabric/bddtests
 behave
 ```
-
-The Behave tests were originally writeen to run in an Ubuntu environment.  Since this document created RHEL-based artifacts, there is a possibility that a number of the Behave tests will fail.
