@@ -43,7 +43,7 @@ For more information about the Hyperledger Fabric project, see
 > access, and append **/usr/local/bin** and the targeted directory that
 > will contain the **go** executable to the **secure_path** variable.
 > The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](building-the-golang-toolchain). Otherwise, if you have root access…
+> Toolchain](#building-the-golang-toolchain). Otherwise, if you have root access…
 > Great! No need to worry about this.
 
 Building Golang
@@ -513,8 +513,8 @@ Once the base RHEL Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
 1.  Make sure that the Docker Daemon and Docker Registry have
-    been started. Refer to [Installing the Docker Client / Daemon](installing-the-docker-client-/-daemon) and
-    [Building the Docker Registry](building-the-docker-registry) sections above
+    been started. Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client-/-daemon) and
+    [Building the Docker Registry](#building-the-docker-registry) sections above
     for building and starting the Docker Daemon and Docker Registry.
 
 2.  Create a Dockerfile:
