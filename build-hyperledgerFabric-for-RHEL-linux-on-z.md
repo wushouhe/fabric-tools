@@ -207,9 +207,9 @@ shell script has the executable attribute set.
     > ***NOTE:*** In order to run the Docker Daemon shell script from a
     > non-root user without prefixing the command with sudo, a docker group
     > needs to be created and the non-root user needs to be added to the
-    > docker group:
-    > **sudo groupadd docker**
-    > **sudo usermod -a -G docker <non-root-user>**
+    > docker group:  
+    > **sudo groupadd docker**  
+    > **sudo usermod -a -G docker \<non-root-user\>**
 
 Building the Docker Registry
 ----------------------------
