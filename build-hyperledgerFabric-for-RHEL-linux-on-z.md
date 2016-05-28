@@ -55,7 +55,7 @@ source code.
 
 Building Golang for Linux on z Systems is a two-step process:
 
-1.  Cross-compile the Golang bootstrap tool on an Intel/AMD-based
+1.  Cross-compile the Golang bootstrap tool on an x86-based
     machine running an up-to-date version of Linux.
 
 2.  Build the Golang toolchain on Linux on z Systems using the bootstrap
