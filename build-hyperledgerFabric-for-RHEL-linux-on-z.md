@@ -341,7 +341,7 @@ components.
 
     ```
     cd $HOME
-    git clone --branch v4.5.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
+    git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
