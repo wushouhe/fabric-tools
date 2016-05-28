@@ -211,7 +211,7 @@ shell script has the executable attribute set.
     > **sudo groupadd docker**  
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
-    > The \<non-root-user\> will have to logout and then login to pick up the change. 
+    > The \<non-root-user\> will have to logout and then login to pick up the change.
 
 Building the Docker Registry
 ----------------------------
@@ -276,17 +276,17 @@ eliminates source code changes to the Hyperledger fabric code.
       ```
     b)  Tailor the Docker Registry configuration file and save:
 
-      - Change the default storage caching mechanism. If you are not
-        using redis for storage caching, edit
-        **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-        **storage.cache.blobdescriptor** parameter from **redis** to
-        **inmemory**.
+    - Change the default storage caching mechanism. If you are not
+      using redis for storage caching, edit
+      **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
+      **storage.cache.blobdescriptor** parameter from **redis** to
+      **inmemory**.
 
-     - Change the default listening port of the Docker Registry. Edit
-       **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-       **http.addr** parameter from **5000** to **5050**. This change
-       is required because port 5000 conflicts with the Hyperledger
-       Fabric peer’s REST service port, which uses port 5000.
+    - Change the default listening port of the Docker Registry. Edit
+     **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
+     **http.addr** parameter from **5000** to **5050**. This change
+     is required because port 5000 conflicts with the Hyperledger
+     Fabric peer’s REST service port, which uses port 5000.
 
     c) Create the default directory to store images, if it does not exist:
 
