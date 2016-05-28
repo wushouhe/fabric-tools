@@ -354,7 +354,7 @@ components.
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
-    make shared_lib && INSTALL_PATH=/usr sudo make install-shared && sudo ldconfig
+    make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
 3.  Delete the rocksdb build directory:
 
