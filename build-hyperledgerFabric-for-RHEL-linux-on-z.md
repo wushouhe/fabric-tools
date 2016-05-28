@@ -151,6 +151,13 @@ environment variable to use the new toolchain.
     export PATH=/<golang_home>/go/bin:$PATH
     ```
 
+5. Cleanup and delete bootstrap files:
+
+    ```
+    cd $HOME
+    rm -rf go-linux-s390x-bootstrap*
+    ```
+
 Docker
 ======
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
@@ -298,6 +305,7 @@ eliminates source code changes to the Hyperledger fabric code.
     ```
     $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
     ```
+
 For a more permanent solution when starting the Docker Registry:
 
 1.  Setup homes for the Docker Registry executable binary and its
@@ -314,10 +322,9 @@ For a more permanent solution when starting the Docker Registry:
     logging file. Ensure that the shell script has the executable
     attribute set.
 
-    ```
+    ```bash
     #!/bin/bash
-    /usr/local/bin/registry /etc/docker-registry/config.yml >
-    /var/log/docker-registry.log 2>&1 &
+    /usr/local/bin/registry /etc/docker-registry/config.yml > /var/log/docker-registry.log 2>&1 &
     ```
 1.  Start the Docker Registry:
 
@@ -334,10 +341,10 @@ is used by the Hyperledger Fabric peer, membership and security service
 components.
 
 1.  RocksDB is written using the C++ programming language. Make sure
-    that the C++ compiler is installed:
+    that the C++ compiler is installed along with the following compression packages:
 
     ```
-    sudo yum -y install gcc-c++
+    sudo yum -y install gcc-c++ zlib-devel snappy-devel bzip2-devel
     ```
 2.  Download and build RocksDB:
 
@@ -347,11 +354,12 @@ components.
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
-    make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
+    make shared_lib && INSTALL_PATH=/usr sudo make install-shared && sudo ldconfig
     ```
 3.  Delete the rocksdb build directory:
 
     ```
+    cd $HOME
     rm -rf $HOME/rocksdb
     ```
 
@@ -364,12 +372,7 @@ was installed after performing step 4 in [Building the Golang Toolchain](#buildi
 If you built Golang using this document, you have already added the
 Golang **bin** directory to your **PATH**.
 
-1.  Install pre-req packages:
-
-    ```
-    sudo yum -y install zlib zlib-devel snappy snappy-devel bzip2 bzip2-devel
-    ```
-2.  Download the Hyperledger Fabric code into a writeable directory:
+1.  Download the Hyperledger Fabric code into a writeable directory:
 
     ```
     mkdir -p $HOME/src/github.com/hyperledger
@@ -378,7 +381,7 @@ Golang **bin** directory to your **PATH**.
     git clone https://github.com/hyperledger/fabric.git
     cd fabric
     ```
-3.  Setup environment variables:
+2.  Setup environment variables:
 
     ```
     export GOROOT=/<golang_home>/go
@@ -389,7 +392,7 @@ Golang **bin** directory to your **PATH**.
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
     > environment variables in steps 2 and 3 to your **.bash_profile** file.
 
-4.  Build the Hyperledger Fabric executable binaries. The peer binary
+3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating or non-validating peer nodes and the membersrvc
     binary is the membership and security server that handles enrollment
     and certificate requests:
