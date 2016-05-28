@@ -399,9 +399,9 @@ Golang **bin** directory to your **PATH**.
 
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build -v
+    go build
     cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -v
+    go build -o membersrvc server.go
     ```
 For a more permanent solution, you can create shell scripts to start the
 peer and the membership and security services executables in the
@@ -412,9 +412,11 @@ background and re-direct logging output to a file.
 
     ```bash
     #!/bin/bash
-    cd $HOME/src/github.com/hyperledger/fabric/peer
+    cd <parent-directory>/src/github.com/hyperledger/fabric/peer
     ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
     ```
+    > **NOTE:** Change \<parent-directory\> to the root directory of where the Hyperledger Fabric code is located.
+
 2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
     with the executable attribute set:
 
@@ -730,6 +732,18 @@ sudo ./peer node start
 Behave Tests
 ============
 A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
+
+Install pre-reqs for Behave:
+
+```
+cd $HOME
+sudo yum -y install python-setuptools
+curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+python get-pip.py
+pip install --upgrade pip
+pip install behave nose docker-compose
+pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
+```
 
 To run the Behave tests:
 
