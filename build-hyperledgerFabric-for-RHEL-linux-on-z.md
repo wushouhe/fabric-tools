@@ -609,12 +609,12 @@ to build their respective Docker images.
     Dockerfile: |
       from <docker_registry_host_ip>:5050/s390x/golang
       # Install RocksDB
-      RUN cd /opt && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /opt/rocksdb
+      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+      WORKDIR /tmp/rocksdb
       RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
       RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
       RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig
+      RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
@@ -657,12 +657,12 @@ Test File Changes
     Dockerfile: |
       from <docker_registry_host_ip>:5050/s390x/golang
       # Install RocksDB
-      RUN cd /opt && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /opt/rocksdb
+      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+      WORKDIR /tmp/rocksdb
       RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
       RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
       RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
+      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
@@ -682,8 +682,9 @@ Test File Changes
       WORKDIR $GOPATH
     ```
 
-3.  Perform steps 1 and 2 for file
-    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml.*
+3.  Perform steps 1 and 2 for files:  
+    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
+    *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*
 
 4.  Edit
     *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
@@ -698,10 +699,10 @@ Running the Unit Tests
 1.  Bring up a window (via ssh or screen) of the system where you built
     the Hyperledger Fabric components and start the Fabric Peer:
 
-```
-cd $HOME/src/github.com/hyperledger/fabric/peer
-sudo ./peer node start
-```
+    ```
+    cd $HOME/src/github.com/hyperledger/fabric/peer
+    sudo ./peer node start
+    ```
 
 2.  From another window of the same Linux system, create an executable
     script called **unit-tests.sh** in **$HOME** using the
@@ -714,7 +715,6 @@ sudo ./peer node start
     export PATH=/<golang_home>/go/bin:$PATH
     export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
-    cd <parent-directory>/src/github/hyperledger/fabric
     go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
     ```
     > ***NOTE:*** If you have root access and would like to run the unit
@@ -741,10 +741,10 @@ Install pre-reqs for Behave:
 cd $HOME
 sudo yum -y install python-setuptools
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-python get-pip.py
-pip install --upgrade pip
-pip install behave nose docker-compose
-pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
+sudo python get-pip.py
+sudo pip install --upgrade pip
+sudo pip install behave nose docker-compose
+sudo pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
 ```
 
 To run the Behave tests:
