@@ -371,7 +371,7 @@ Golang **bin** directory to your **PATH**.
 
     ```
     mkdir -p $HOME/src/github.com/hyperledger
-    export GOPATH=<work_dir>
+    export GOPATH=$HOME
     cd $HOME/src/github.com/hyperledger
     git clone https://github.com/hyperledger/fabric.git
     cd fabric
