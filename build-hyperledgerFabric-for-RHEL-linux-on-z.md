@@ -35,6 +35,17 @@ may become obsolete or out of date.
 For more information about the Hyperledger Fabric project, see
 <https://github.com/hyperledger/fabric>.
 
+> ***NOTE:***   
+> The instructions contained in this document assume that you
+> are using a non-root user with sudo authority and that the non-root
+> user has been added to the **wheel** group. In addition, update the
+> **/etc/sudoers** file to enable the **wheel** group with no password
+> access, and append **/usr/local/bin** and the targeted directory that
+> will contain the **go** executable to the **secure_path** variable.
+> The targeted directory is set in step 4 of [Building the Golang
+> Toolchain](building-the-golang-toolchain). Otherwise, if you have root access…
+> Great! No need to worry about this.
+
 Building Golang
 ===============
 The Hyperledger Fabric and the Docker Registry are written using the
@@ -49,16 +60,6 @@ Building Golang for Linux on z Systems is a two-step process:
 
 2.  Build the Golang toolchain on Linux on z Systems using the bootstrap
     tool created in step 1.
-
-> ***NOTE:*** The instructions contained in this document assume that you
-> are using a non-root user with sudo authority and that the non-root
-> user has been added to the **wheel** group. In addition, update the
-> **/etc/sudoers** file to enable the **wheel** group with no password
-> access, and append **/usr/local/bin** and the targeted directory that
-> will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](building-the-golang-toolchain). Otherwise, if you have root access…
-> Great! No need to worry about this.
 
 For information on how the Golang bootstrapping process works, see the
 blog entry at
