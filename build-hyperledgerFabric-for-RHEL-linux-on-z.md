@@ -553,7 +553,7 @@ the file:
     cd $HOME
     docker build -t <docker_registry_host_ip>:5050/s390x/golang -f <docker_file> .
     ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip>\** with the IP
+    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
     > address of the host that is running your Docker Registry. Replace
     > **\<docker_file\>** with **Dockerfile** or the name of your file
     > containing the Docker statements listed in step 2.
