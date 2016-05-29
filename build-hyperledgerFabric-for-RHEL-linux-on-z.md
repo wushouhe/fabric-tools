@@ -322,11 +322,19 @@ For a more permanent solution when starting the Docker Registry:
     #!/bin/bash
     /usr/local/bin/registry /etc/docker-registry/config.yml > /var/log/docker-registry.log 2>&1 &
     ```
-1.  Start the Docker Registry:
+3.  Start the Docker Registry:
 
     ```
     sudo <docker-registry-script-name>
     ```
+
+4.  Cleanup Docker directories:
+
+    ```
+    cd $HOME
+    rm docker-*
+    ```
+
 For more information on the Docker Distribution project, see
 <https://github.com/docker/distribution>.
 
