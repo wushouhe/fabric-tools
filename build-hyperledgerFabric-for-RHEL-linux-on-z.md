@@ -691,11 +691,21 @@ Test File Changes
       WORKDIR $GOPATH
     ```
 
-3.  Perform steps 1 and 2 for files:  
+3.  Perform steps 1 and 2 for file:  
     *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
-    *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*
 
-4.  Edit
+4.  Edit *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
+
+    a) Perform steps 1 and 2 for the chaincodetest.yaml file.
+
+    b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+
+    ```
+    Dockerfile: |
+      from <docker_registry_host_ip>:5050/s390x/golang
+    ```
+
+5.  Edit
     *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
     and replace **busybox** with **s390x/busybox**.
 
