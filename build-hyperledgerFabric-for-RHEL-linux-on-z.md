@@ -397,7 +397,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     > environment variables in steps 2 and 3 to your **.bash_profile** file.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
-    runs validating or non-validating peer nodes and the membersrvc
+    runs validating peer nodes and the membersrvc
     binary is the membership and security server that handles enrollment
     and certificate requests:
 
