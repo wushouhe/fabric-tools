@@ -458,7 +458,7 @@ Build a Base RHEL Docker Image
 ------------------------------
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
-    Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client-/-daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
+    Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
 
 2.  Copy and paste the contents of
     <https://github.com/docker/docker/blob/master/contrib/mkimage-yum.sh>
