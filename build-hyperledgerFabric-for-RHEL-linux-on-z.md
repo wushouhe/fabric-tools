@@ -577,15 +577,22 @@ the file:
     cd $HOME/src/github.com/hyperledger/fabric/peer
     vi core.yaml
     ```
-    > ***NOTE:*** Replace the **chaincode.golang.Dockerfile** parameter (located within
-    > lines 280-290) with the following:
 
-    ```
-    Dockerfile: |
-      from <docker_registry_host_ip>:5050/s390x/golang
-      COPY src $GOPATH/src
-      WORKDIR $GOPATH
-    ```
+    a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
+
+      ```
+      Dockerfile: |
+        from <docker_registry_host_ip>:5050/s390x/golang
+        COPY src $GOPATH/src
+        WORKDIR $GOPATH
+      ```
+
+      b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+
+        ```
+        Dockerfile: |
+          from <docker_registry_host_ip>:5050/s390x/golang
+        ```
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
