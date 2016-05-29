@@ -514,7 +514,7 @@ Once the base RHEL Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
 1.  Make sure that the Docker Daemon and Docker Registry have
-    been started. Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client-/-daemon) and
+    been started. Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and
     [Building the Docker Registry](#building-the-docker-registry) sections above
     for building and starting the Docker Daemon and Docker Registry.
 
