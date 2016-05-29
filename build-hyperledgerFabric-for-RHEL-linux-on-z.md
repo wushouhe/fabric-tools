@@ -589,10 +589,10 @@ the file:
 
       b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
 
-        ```
-        Dockerfile: |
-          from <docker_registry_host_ip>:5050/s390x/golang
-        ```
+      ```
+      Dockerfile: |
+        from <docker_registry_host_ip>:5050/s390x/golang
+      ```
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
