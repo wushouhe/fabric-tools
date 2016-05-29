@@ -302,6 +302,13 @@ eliminates source code changes to the Hyperledger fabric code.
     $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
     ```
 
+7.  Cleanup Docker directories:
+
+    ```
+    cd $HOME
+    rm docker-*
+    ```
+
 For a more permanent solution when starting the Docker Registry:
 
 1.  Setup homes for the Docker Registry executable binary and its
@@ -326,13 +333,6 @@ For a more permanent solution when starting the Docker Registry:
 
     ```
     sudo <docker-registry-script-name>
-    ```
-
-4.  Cleanup Docker directories:
-
-    ```
-    cd $HOME
-    rm docker-*
     ```
 
 For more information on the Docker Distribution project, see
