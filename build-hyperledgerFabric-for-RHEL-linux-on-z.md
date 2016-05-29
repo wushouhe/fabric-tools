@@ -556,7 +556,7 @@ the file:
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
     > address of the host that is running your Docker Registry. Replace
     > **\<docker_file\>** with **Dockerfile** or the name of your file
-    > containing the Docker statements listed in step 2.
+    > containing the Docker statements listed in step 3.
 
 6.  Confirm that your new image was created by issuing the **docker
     images** command.
