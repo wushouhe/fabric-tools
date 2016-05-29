@@ -722,8 +722,6 @@ Running the Unit Tests
     export GOPATH=<parent-directory>
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
     go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
     ```
     > ***NOTE:*** If you have root access and would like to run the unit
