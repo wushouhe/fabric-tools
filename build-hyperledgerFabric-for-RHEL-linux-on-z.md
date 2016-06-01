@@ -360,6 +360,8 @@ components.
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
     make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
+    >***NOTE:*** Change **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
+
 3.  Delete the rocksdb build directory:
 
     ```
@@ -632,7 +634,8 @@ to build their respective Docker images.
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.
+    > address of the host that is running your Docker Registry.  
+    >***NOTE:*** Change **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
 3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
 
@@ -679,6 +682,8 @@ Test File Changes
       ENV PATH $GOPATH/bin:$PATH
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
+    >***NOTE:*** Change **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
+
 2.  Edit
     *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **chaincode.golang.Dockerfile** parameter with the
