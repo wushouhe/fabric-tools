@@ -394,7 +394,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 2 and 3 to your **.bash_profile** file.
+    > environment variables in steps 1 and 2 to your **.bash_profile** file.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
