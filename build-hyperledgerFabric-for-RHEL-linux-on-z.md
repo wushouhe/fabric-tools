@@ -570,7 +570,7 @@ the file:
     > address of the host that is running your Docker Registry.
 
 8.  Update your Hyperledger Fabric peer’s configuration file and save.
-    The following change informs the peer to use your Golang toolchain
+    The following changes inform the peer to use your Golang toolchain
     Docker image when executing Chaincode transactions:
 
     ```
