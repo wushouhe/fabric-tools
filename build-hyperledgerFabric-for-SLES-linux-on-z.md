@@ -5,8 +5,8 @@ infrastructure components associated with IBM’s Open Blockchain
 technology, Hyperledger Fabric, on the Linux on z Systems platform.
 
 More importantly, you will create the Docker artifacts using the base
-RHEL 7.x system on which you will deploy. The base Docker image will be
-RHEL 7.x based and have access to the same yum repositories as the
+SLES 12 SP1 system on which you will deploy. The base Docker image will be
+SLES 12 SP1 based and have access to the same yum repositories as the
 system on which you deploy. This eliminates the need to download any
 pre-built Docker images from the public Docker repository, eliminating
 one potential security exposure. The Docker images you create will be
@@ -27,8 +27,7 @@ and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
 environment.
 
-The procedures in this guide are tailored for Red Hat Enterprise Edition
-(RHEL) 7.x. Due to the ongoing development activity within the
+The procedures in this guide are tailored for SUSE Linux Enterprise Server (SLES) 12 SP1. Due to the ongoing development activity within the
 Hyperledger project, there is a chance that portions of this document
 may become obsolete or out of date.
 
@@ -117,7 +116,7 @@ your Linux on z Systems instance and perform the steps below.
 1.  Install the dependencies.
 
     ```
-    sudo yum install -y git gcc
+    sudo zypper --non-interactive in git-core gcc
     ```
 2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
 
@@ -170,20 +169,21 @@ below.
 
 Installing the Docker Client / Daemon
 -------------------------------------
-Refer to [Linux on z Systems Docker installation
-instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
-for downloading and installing the RHEL distribution of Docker on Linux
-on z Systems.
+Docker is packaged with SLES 12 SP1.  Perform the following steps to install and configure Docker:
 
-For a more permanent solution when starting the Docker Daemon:
-
-1.  Copy the Docker binary file to a directory that is contained within the
-    current **PATH** environment variable:
+1.  Ensure that the apparmor package is up to date:
 
     ```
-    sudo cp /<current_path_of_docker_file>/docker /usr/local/bin
+    sudo zypper in apparmor
     ```
-2. Create a shell script in **/usr/local/bin** to start the Docker
+
+2.  Install the Docker package:
+
+    ```
+    sudo zypper in docker
+    ```
+
+3. Create a shell script in **/usr/local/bin** to start the Docker
 Daemon and redirect all output to a logging file. Ensure that the
 shell script has the executable attribute set.
 
@@ -197,14 +197,10 @@ shell script has the executable attribute set.
     > insecure registry matches the port number that the Docker Registry is
     > listening on.
 
-3.  Ensure that the device-mapper package is up to date:
-
-    ```
-    sudo yum -y install device-mapper
-    ```
 4. Start the Docker Daemon shell script:
 
     ```
+    sudo touch /var/run/docker.sock
     sudo <docker-daemon-script-name>
     ```
     > ***NOTE:*** In order to run the Docker Daemon shell script from a
@@ -231,7 +227,7 @@ eliminates source code changes to the Hyperledger fabric code.
 
 1.  Install the dependencies:
     ```
-    sudo yum install -y git make
+    sudo zypper in git-core make
     ```
     > ***NOTE:*** Golang is required to build the Docker Registry. See [Building Golang](#building-golang)
     > to build the Golang toolchain. You may have already
@@ -302,13 +298,6 @@ eliminates source code changes to the Hyperledger fabric code.
     $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
     ```
 
-7.  Cleanup Docker directories:
-
-    ```
-    cd $HOME
-    rm docker-*
-    ```
-
 For a more permanent solution when starting the Docker Registry:
 
 1.  Setup homes for the Docker Registry executable binary and its
@@ -348,7 +337,7 @@ components.
     that the C++ compiler is installed along with the following compression packages:
 
     ```
-    sudo yum -y install gcc-c++ zlib-devel snappy-devel bzip2-devel
+    sudo zypper --non-interactive --no-gpg-check in gcc-c++ zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
     ```
 2.  Download and build RocksDB:
 
@@ -435,15 +424,15 @@ Build a Golang Toolchain Docker Image
 =====================================
 The section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain built upon the
-RHEL operating system. There is no need to download any pre-existing
+SLES operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
 It is a two-step process to build the Golang toolchain Docker image:
 
-1.  Build your own RHEL Docker image from scratch.
+1.  Build your own SLES Docker image from scratch.
 
-2.  Build a Golang toolchain Docker image from the base RHEL Docker
+2.  Build a Golang toolchain Docker image from the base SLES Docker
     image built in step 1.
 
 This Docker image is used by the Hyperledger Fabric peer component when
@@ -454,63 +443,117 @@ the **peer chaincode deploy** command. Docker containers are started by the peer
 and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
-Build a Base RHEL Docker Image
+Build a Base SLES Docker Image
 ------------------------------
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
 
-2.  Copy and paste the contents of
-    <https://github.com/docker/docker/blob/master/contrib/mkimage-yum.sh>
-    into a new file, **mkimage-yum.sh**, file on your local RHEL system where the Docker image
-    will be created. Place the script into **/usr/local/bin**. Ensure
-    the new script file has the executable attribute set.
-
-3.  If you are not using the Red Hat subscription service to update
-    packages on your system, add the following lines to your
-    **mkimage-yum.sh** script just before the **yum -c "$yum_config"
-    --installroot="$target" -y clean** command:
+2.  Create a new file called **/usr/local/bin/mkimage-zypp.sh** and paste the following contents into the new file. Enable the executable attribute for the new file.
 
     ```
-    cp -ra /etc/yum/* "$target"/etc/yum/
-    cp -ra /etc/yum.repos.d "$target"/etc
-    yum -c "$yum_config" --installroot="$target" -y install net-tools
-    ```
-    > ***NOTE:*** This command will copy all of your existing yum repository definitions
-    > during the build of the RHEL Docker image. Additional build steps
-    > access the repositories to install pre-requisite packages during the
-    > building of additional Docker images used within the Hyperledger
-    > Fabric environment.
+    #!/usr/bin/env bash
+    #
+    # Create a base SLES Docker image.
+    #
 
-4.  Execute the **mkimage-yum.sh** script to create and import the RHEL
+    usage() {
+      cat <<EOOPTS
+    $(basename $0) <name >
+    EOOPTS
+      exit 1
+    }
+
+    name=$1
+
+    if [[ -z $name ]]; then
+      usage
+    fi
+
+    target=$(mktemp -d --tmpdir $(basename $0).XXXXXX)
+    mkdir -m 755 "$target"/dev
+    mknod -m 600 "$target"/dev/console c 5 1
+    mknod -m 600 "$target"/dev/initctl p
+    mknod -m 666 "$target"/dev/full c 1 7
+    mknod -m 666 "$target"/dev/null c 1 3
+    mknod -m 666 "$target"/dev/ptmx c 5 2
+    mknod -m 666 "$target"/dev/random c 1 8
+    mknod -m 666 "$target"/dev/tty c 5 0
+    mknod -m 666 "$target"/dev/tty0 c 4 0
+    mknod -m 666 "$target"/dev/urandom c 1 9
+    mknod -m 666 "$target"/dev/zero c 1 5
+
+    # install core packages
+    zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" install -l pattern:Minimal vim
+    cp -ra /etc/zypp "$target"/etc
+    cp -ra /etc/products.d "$target"/etc
+    zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" clean
+    zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" refresh -d
+
+    # locales
+    rm -rf
+    "$target"/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
+
+    # docs and man pages
+    rm -rf "$target"/usr/share/{man,doc,info,gnome/help}
+
+    # cracklib
+    rm -rf "$target"/usr/share/cracklib
+
+    # i18n
+    rm -rf "$target"/usr/share/i18n
+
+    # zypp cache
+    rm -rf "$target"/var/cache/zypp
+    mkdir -p --mode=0755 "$target"/var/cache/zypp
+
+    # sln
+    rm -rf "$target"/sbin/sln
+
+    # ldconfig
+    rm -rf "$target"/etc/ld.so.cache "$target"/var/cache/ldconfig
+    mkdir -p --mode=0755 "$target"/var/cache/ldconfig
+    version=`grep "VERSION=" ${target}/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
+
+    if [ -z "$version" ]; then
+      echo >&2 "warning: cannot autodetect OS version, using '$name' as tag"
+      version=$name
+    fi
+
+    tar --numeric-owner -c -C "$target" . | docker import - $name:$version
+    docker run -i -t --rm $name:$version /bin/bash -c 'echo success'
+    rm -rf "$target"
+    ```
+
+3.  Execute the **mkimage-zypp.sh** script to create and import the RHEL
     Docker image:
 
     ```
-    sudo mkimage-yum.sh rhelbase
+    sudo mkimage-zypp.sh slesbase
     ```
-5.  Obtain the **rhelbase** Docker image’s **TAG**.
-    The **rhelbase:\<TAG\>** is required to build the Golang
+4.  Obtain the **slesbase** Docker image’s **TAG**.
+    The **slesbase:\<TAG\>** is required to build the Golang
     toolchain Docker image:
 
     ```
     docker images
     ```
-    > Look for **rhelbase** in the REPOSITORY column and note the TAG name
-    > for **rhelbase**.
+    > Look for **slesbase** in the REPOSITORY column and note the TAG name
+    > for **slesbase**.
     >
-    > In the example below the TAG is 7.2.
+    > In the example below the TAG is 12-SP1.
     >
-    > ![](./media/docker-images-rhel.jpg)
+    > ![](./media/docker-images-sles.jpg)
     >
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
     >  
-    > *docker tag rhelbase:\<TAG\> \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>   
-    > docker push \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>*
+    > *docker tag slesbase:\<TAG\> \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>   
+    > docker push \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>*
 
-Build a Golang Toolchain Docker Image from the Base RHEL Docker Image
+Build a Golang Toolchain Docker Image from the Base SLES Docker Image
 ---------------------------------------------------------------------
-Once the base RHEL Docker image is created, complete the following steps
+Once the base SLES Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
 1.  Make sure that the Docker Daemon and Docker Registry have
@@ -528,8 +571,8 @@ to build a Golang toolchain Docker image:
 the file:
 
     ```
-    FROM rhelbase:<TAG>
-    RUN yum -y groupinstall "Development Tools"
+    FROM slesbase:<TAG>
+    RUN zypper --non-interactive --no-gpg-check in gcc gcc-c++ make git-core
     COPY go /usr/local/go
     ENV GOPATH=/opt/gopath
     ENV GOROOT=/usr/local/go
@@ -538,7 +581,7 @@ the file:
     WORKDIR $GOPATH
     ```
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
-    > step 5 of [Build a Base RHEL Docker Image](#build-a-base-rhel-docker-image).
+    > step 4 of [Build a Base SLES Docker Image](#build-a-base-rhel-docker-image).
 
 4.  Make sure that a copy of the **go** directory is in your
     **$HOME** directory. If you used the
@@ -622,7 +665,7 @@ to build their respective Docker images.
       WORKDIR /tmp/rocksdb
       RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
       RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
+      RUN zypper --non-interactive --no-gpg-check in zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
       RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
@@ -670,7 +713,7 @@ Test File Changes
       WORKDIR /tmp/rocksdb
       RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
       RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
+      RUN zypper --non-interactive --no-gpg-check in zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
       RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
@@ -756,7 +799,7 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 
     ```
     cd $HOME
-    sudo yum -y install python-setuptools
+    sudo zypper in python-setuptools
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
     sudo pip install --upgrade pip
