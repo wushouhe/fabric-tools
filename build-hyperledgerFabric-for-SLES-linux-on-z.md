@@ -68,7 +68,7 @@ Cross-Compiling the Bootstrap Tool
 ----------------------------------
 To build the Golang bootstrap tool you will need to use an
 x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x.
+RHEL 7.x.  The Bootstrap Tool can also be created on an x86-based machine running an up-to-date version of SLES.  Simply replace the yum command with the equivalent zypper command.
 
 1.  Install the dependencies:
 
