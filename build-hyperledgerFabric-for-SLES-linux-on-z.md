@@ -1,4 +1,4 @@
-Hyperledger Fabric Build for RHEL on Linux on z Systems
+Hyperledger Fabric Build for SLES on Linux on z Systems
 =========================================================
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
