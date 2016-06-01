@@ -68,7 +68,7 @@ Cross-Compiling the Bootstrap Tool
 ----------------------------------
 To build the Golang bootstrap tool you will need to use an
 x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x.  The Bootstrap Tool can also be created on an x86-based machine running an up-to-date version of SLES.  Simply replace the yum command with the equivalent zypper command.
+RHEL 7.x.  The bootstrap tool can also be created on an x86-based machine running an up-to-date version of SLES.  Simply replace the yum command with the equivalent zypper command.
 
 1.  Install the dependencies:
 
@@ -174,7 +174,7 @@ Docker is packaged with SLES 12 SP1.  Perform the following steps to install and
 1.  Ensure that the apparmor package is up to date:
 
     ```
-    sudo zypper in apparmor
+    sudo zypper install patterns-sles-apparmor
     ```
 
 2.  Install the Docker package:
@@ -361,7 +361,7 @@ Build the Hyperledger Fabric Core
 The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
 >***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
->was installed after performing step 4 in [Building the Golang >Toolchain](#building-the-golang-toolchain).
+>was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
 >If you built Golang using this document, you have already added the
 >Golang **bin** directory to your **PATH**.
 

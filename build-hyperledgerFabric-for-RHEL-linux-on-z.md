@@ -372,7 +372,7 @@ Build the Hyperledger Fabric Core
 The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
 >***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
->was installed after performing step 4 in [Building the Golang >Toolchain](#building-the-golang-toolchain).
+>was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
 >If you built Golang using this document, you have already added the
 >Golang **bin** directory to your **PATH**.
 
