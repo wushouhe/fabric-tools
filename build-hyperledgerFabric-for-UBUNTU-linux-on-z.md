@@ -117,7 +117,7 @@ your Linux on z Systems instance and perform the steps below.
 1.  Install the dependencies.
 
     ```
-    sudo apt-get -y install git gcc
+    sudo apt-get -y install git gcc make
     ```
 2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
 
@@ -226,7 +226,7 @@ components.
     that the C++ compiler is installed along with the following compression packages:
 
     ```
-    sudo yum -y install gcc-c++ zlib-devel snappy-devel bzip2-devel
+    sudo apt-get -y install g++ libsnappy-dev zlib1g-dev libbz2-dev
     ```
 2.  Download and build RocksDB:
 
@@ -338,65 +338,47 @@ Build a Base Ubuntu Docker Image
 ------------------------------
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
-    Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
+    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
-2.  Copy and paste the contents of
-    <https://github.com/docker/docker/blob/master/contrib/mkimage-yum.sh>
-    into a new file, **mkimage-yum.sh**, file on your local Ubuntu system where the Docker image
-    will be created. Place the script into **/usr/local/bin**. Ensure
-    the new script file has the executable attribute set.
-
-3.  If you are not using the Red Hat subscription service to update
-    packages on your system, add the following lines to your
-    **mkimage-yum.sh** script just before the **yum -c "$yum_config"
-    --installroot="$target" -y clean** command:
+2.  Install the **debootstrap** utility:
 
     ```
-    cp -ra /etc/yum/* "$target"/etc/yum/
-    cp -ra /etc/yum.repos.d "$target"/etc
-    yum -c "$yum_config" --installroot="$target" -y install net-tools
+    sudo apt-get -y install debootstrap
     ```
-    > ***NOTE:*** This command will copy all of your existing yum repository definitions
-    > during the build of the Ubuntu Docker image. Additional build steps
-    > access the repositories to install pre-requisite packages during the
-    > building of additional Docker images used within the Hyperledger
-    > Fabric environment.
 
-4.  Execute the **mkimage-yum.sh** script to create and import the Ubuntu
+3.  Execute the **debootsrap** utility to create and import the Ubuntu
     Docker image:
 
     ```
-    sudo mkimage-yum.sh rhelbase
+    sudo debootstrap ubuntu-base
     ```
-5.  Obtain the **rhelbase** Docker image’s **TAG**.
-    The **rhelbase:\<TAG\>** is required to build the Golang
+4.  Obtain the **ubuntu-base** Docker image’s **TAG**.
+    The **ubuntu-base:\<TAG\>** is required to build the Golang
     toolchain Docker image:
 
     ```
     docker images
     ```
-    > Look for **rhelbase** in the REPOSITORY column and note the TAG name
-    > for **rhelbase**.
+    > Look for **ubuntu-base** in the REPOSITORY column and note the TAG name
+    > for **ubuntu-base**.
     >
-    > In the example below the TAG is 7.2.
+    > In the example below the TAG is 16.4.
     >
-    > ![](./media/docker-images-rhel.jpg)
+    > ![](./media/docker-images-ubuntu.jpg)
     >
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
     >  
-    > *docker tag rhelbase:\<TAG\> \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>   
-    > docker push \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>*
+    > *docker tag ubuntu-base:\<TAG\> \<docker_registry_host_ip\>:5050/ubuntu-base:\<TAG\>   
+    > docker push \<docker_registry_host_ip\>:5050/ubuntu-ase:\<TAG\>*
 
 Build a Golang Toolchain Docker Image from the Base Ubuntu Docker Image
 ---------------------------------------------------------------------
 Once the base Ubuntu Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
-1.  Make sure that the Docker Daemon and Docker Registry have
-    been started. Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and
-    [Building the Docker Registry](#building-the-docker-registry) sections above
-    for building and starting the Docker Daemon and Docker Registry.
+1.  Make sure that your Docker Daemon and Docker Registry are started.
+    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Create a Dockerfile:
 
@@ -418,7 +400,7 @@ the file:
     WORKDIR $GOPATH
     ```
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
-    > step 5 of [Build a Base Ubuntu Docker Image](#build-a-base-rhel-docker-image).
+    > step 5 of [Build a Base Ubuntu Docker Image](#build-a-base-ubuntu-docker-image).
 
 4.  Make sure that a copy of the **go** directory is in your
     **$HOME** directory. If you used the
