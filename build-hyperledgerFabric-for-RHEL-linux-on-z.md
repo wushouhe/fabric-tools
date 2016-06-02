@@ -768,8 +768,12 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
     sudo pip install behave nose docker-compose
     sudo pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
     ```
+2. Add a firewall rule to ensure traffic flow on the docker0 interface with a  destination port of 2375 (docker daemon API port).  The Behave tests take advantage of Docker containers to test the Fabric peer's functionality.
 
-2. Run the Behave tests:
+    ```
+    iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
+    ```
+3. Run the Behave tests:
 
     ```
     cd $HOME/src/github.com/hyperledger/fabric/bddtests
