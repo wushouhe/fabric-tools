@@ -182,6 +182,10 @@ Docker is packaged with SLES 12 SP1.  Perform the following steps to install and
     ```
     sudo zypper in docker
     ```
+    >***NOTE:*** If your SLES system does not have a docker package in its repositories or is less than version 1.9, refer to [Linux on z Systems Docker installation
+    instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
+    for downloading and installing the SLES distribution of Docker on Linux
+    on z Systems.
 
 3. Create a shell script in **/usr/local/bin** to start the Docker
 Daemon and redirect all output to a logging file. Ensure that the
