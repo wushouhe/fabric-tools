@@ -1,12 +1,12 @@
-Hyperledger Fabric Build for RHEL on Linux on z Systems
+Hyperledger Fabric Build for Ubuntu on Linux on z Systems
 =========================================================
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
 technology, Hyperledger Fabric, on the Linux on z Systems platform.
 
 More importantly, you will create the Docker artifacts using the base
-RHEL 7.x system on which you will deploy. The base Docker image will be
-RHEL 7.x based and have access to the same yum repositories as the
+Ubuntu system on which you will deploy. The base Docker image will be
+Ubuntu based and have access to the same yum repositories as the
 system on which you deploy. This eliminates the need to download any
 pre-built Docker images from the public Docker repository, eliminating
 one potential security exposure. The Docker images you create will be
@@ -27,9 +27,7 @@ and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
 environment.
 
-The procedures in this guide are tailored for Red Hat Enterprise Edition
-(RHEL) 7.x. Due to the ongoing development activity within the
-Hyperledger project, there is a chance that portions of this document
+The procedures in this guide are tailored for Ubuntu. Due to the ongoing development activity within the Hyperledger project, there is a chance that portions of this document
 may become obsolete or out of date.
 
 For more information about the Hyperledger Fabric project, see
@@ -69,7 +67,9 @@ Cross-Compiling the Bootstrap Tool
 ----------------------------------
 To build the Golang bootstrap tool you will need to use an
 x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x.
+RHEL 7.x. The bootstrap tool can also be created on an x86-based
+machine running an up-to-date version of Ubuntu.  Simply replace the yum command
+with the equivalent apt-get command.
 
 1.  Install the dependencies:
 
@@ -117,7 +117,7 @@ your Linux on z Systems instance and perform the steps below.
 1.  Install the dependencies.
 
     ```
-    sudo yum install -y git gcc
+    sudo apt-get -y install git gcc
     ```
 2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
 
@@ -170,51 +170,31 @@ below.
 
 Installing the Docker Client / Daemon
 -------------------------------------
-Refer to [Linux on z Systems Docker installation
-instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
-for downloading and installing the RHEL distribution of Docker on Linux
-on z Systems.
 
-For a more permanent solution when starting the Docker Daemon:
-
-1.  Copy the Docker binary file to a directory that is contained within the
-    current **PATH** environment variable:
+1.  Install the Docker package:
 
     ```
-    sudo cp /<current_path_of_docker_file>/docker /usr/local/bin
+    sudo apt-get -y install docker.io
     ```
-2. Create a shell script in **/usr/local/bin** to start the Docker
-Daemon and redirect all output to a logging file. Ensure that the
-shell script has the executable attribute set.
 
-    ```
-    #!/bin/bash
-    /usr/local/bin/docker daemon -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050 > /var/log/docker.log 2>&1 &
-    ```
-    > ***NOTE:*** If your Docker Registry is running on another system, change
-    > **localhost** to either the hostname or IP address of the system
-    > running the Docker Registry. Also note that the port number of the
-    > insecure registry matches the port number that the Docker Registry is
-    > listening on.
-
-3.  Ensure that the device-mapper package is up to date:
-
-    ```
-    sudo yum -y install device-mapper
-    ```
-4. Start the Docker Daemon shell script:
-
-    ```
-    sudo <docker-daemon-script-name>
-    ```
-    > ***NOTE:*** In order to run the Docker Daemon shell script from a
-    > non-root user without prefixing the command with sudo, a docker group
-    > needs to be created and the non-root user needs to be added to the
-    > docker group:  
+    > ***NOTE:*** The installation of the docker.io package includes the starting
+    >of the Docker daemon.  
+    >  
+    >In order to run the Docker Daemon shell script from a
+    > non-root user without prefixing the command with sudo, the non-root user
+    >needs to be added to the  docker group:  
     > **sudo groupadd docker**  
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
     > The \<non-root-user\> will have to logout and then login to pick up the change.
+
+2.  Update the Docker daemon start options:
+
+    ```
+    sudo systemctl stop docker.service
+    sudo sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock\"" /etc/default/docker
+    sudo systemctl start docker.service
+    ```
 
 Building the Docker Registry
 ----------------------------
@@ -229,114 +209,23 @@ Systems Docker daemons, which will allow the use of the same unaltered
 Dockerfile contents used by the Docker daemon on the x86 platform. This
 eliminates source code changes to the Hyperledger fabric code.
 
-1.  Install the dependencies:
-    ```
-    sudo yum install -y git make
-    ```
-    > ***NOTE:*** Golang is required to build the Docker Registry. See [Building Golang](#building-golang)
-    > to build the Golang toolchain. You may have already
-    > installed the **git** and **make** packages when building Golang. If
-    > so, ignore the installation of the packages within this step.
-
-2.  Create a distribution directory and clone the source code:
+1.  Install the Docker registry package:
 
     ```
-    mkdir -p $HOME/src/github.com/docker
-    cd $HOME/src/github.com/docker
-    git clone https://github.com/docker/distribution.git
-    cd $HOME/src/github.com/docker/distribution
-    git checkout v2.3.0
-    ```
-3.  Set **GOPATH** and **DISTRIBUTION_DIR** environment variables:
-
-    ```
-    export DISTRIBUTION_DIR=$HOME/src/github.com/docker/distribution
-    export GOPATH=$HOME
-    export GOPATH=$DISTRIBUTION_DIR/Godeps/_workspace:$GOPATH
-    ```
-4. Build the distribution binaries:
-
-    ```
-    cd $HOME/src/github.com/docker/distribution
-    make PREFIX=$HOME clean binaries
-    ```
-5.  Run the Test Suite:
-
-    ```
-    make PREFIX=$HOME test
-    ```
-6.  Start the Docker Registry:
-
-    > ***NOTE:*** The Docker Registry fetches the configuration from
-    > **$DISTRIBUTION_DIR/ cmd/registry/config.yml**. The default
-    > filesystem location where the Docker Registry stores images is
-    > **/var/lib/registry.**
-
-    a) Copy the **config-dev.yml** file to **config.yml**:
-
-      ```
-      cp $DISTRIBUTION_DIR/cmd/registry/config-dev.yml $DISTRIBUTION_DIR/cmd/registry/config.yml
-      ```
-    b)  Tailor the Docker Registry configuration file and save:
-
-    - Change the default storage caching mechanism. If you are not
-      using redis for storage caching, edit
-      **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-      **storage.cache.blobdescriptor** parameter from **redis** to
-      **inmemory**.
-
-    - Change the default listening port of the Docker Registry. Edit
-     **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-     **http.addr** parameter from **5000** to **5050**. This change
-     is required because port 5000 conflicts with the Hyperledger
-     Fabric peer’s REST service port, which uses port 5000.
-
-    c) Create the default directory to store images, if it does not exist:
-
-      ```
-      sudo mkdir -p /var/lib/registry
-      ```
-    d) Start the Docker Registry:
-
-    ```
-    $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
+    sudo apt-get -y install docker-registry
     ```
 
-7.  Cleanup Docker directories:
+2.  Update the Docker Registry configuration file:
 
     ```
-    cd $HOME
-    rm docker-*
+    sudo sed -i 's/5000/5050/g' /etc/docker/registry/config.yml
     ```
 
-For a more permanent solution when starting the Docker Registry:
-
-1.  Setup homes for the Docker Registry executable binary and its
-    configuration file:
-
-    ```
-    sudo mkdir /etc/docker-registry
-    sudo cp $DISTRIBUTION_DIR/cmd/registry/config.yml /etc/docker-registry
-    sudo cp $HOME/bin/registry /usr/local/bin
-    ```
-
-2.  Create a shell script in **/usr/local/bin** to start the Docker
-    Registry in the background and redirect all output to a
-    logging file. Ensure that the shell script has the executable
-    attribute set.
-
-    ```bash
-    #!/bin/bash
-    /usr/local/bin/registry /etc/docker-registry/config.yml > /var/log/docker-registry.log 2>&1 &
-    ```
 3.  Start the Docker Registry:
 
     ```
-    sudo <docker-registry-script-name>
+    sudo systemctl start docker-registry.service
     ```
-
-For more information on the Docker Distribution project, see
-<https://github.com/docker/distribution>.
 
 Build and Install RocksDB
 =========================
@@ -437,15 +326,15 @@ Build a Golang Toolchain Docker Image
 =====================================
 The section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain built upon the
-RHEL operating system. There is no need to download any pre-existing
+Ubuntu operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
 It is a two-step process to build the Golang toolchain Docker image:
 
-1.  Build your own RHEL Docker image from scratch.
+1.  Build your own Ubuntu Docker image from scratch.
 
-2.  Build a Golang toolchain Docker image from the base RHEL Docker
+2.  Build a Golang toolchain Docker image from the base Ubuntu Docker
     image built in step 1.
 
 This Docker image is used by the Hyperledger Fabric peer component when
@@ -456,7 +345,7 @@ the **peer chaincode deploy** command. Docker containers are started by the peer
 and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
-Build a Base RHEL Docker Image
+Build a Base Ubuntu Docker Image
 ------------------------------
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
@@ -464,7 +353,7 @@ Build a Base RHEL Docker Image
 
 2.  Copy and paste the contents of
     <https://github.com/docker/docker/blob/master/contrib/mkimage-yum.sh>
-    into a new file, **mkimage-yum.sh**, file on your local RHEL system where the Docker image
+    into a new file, **mkimage-yum.sh**, file on your local Ubuntu system where the Docker image
     will be created. Place the script into **/usr/local/bin**. Ensure
     the new script file has the executable attribute set.
 
@@ -479,12 +368,12 @@ Build a Base RHEL Docker Image
     yum -c "$yum_config" --installroot="$target" -y install net-tools
     ```
     > ***NOTE:*** This command will copy all of your existing yum repository definitions
-    > during the build of the RHEL Docker image. Additional build steps
+    > during the build of the Ubuntu Docker image. Additional build steps
     > access the repositories to install pre-requisite packages during the
     > building of additional Docker images used within the Hyperledger
     > Fabric environment.
 
-4.  Execute the **mkimage-yum.sh** script to create and import the RHEL
+4.  Execute the **mkimage-yum.sh** script to create and import the Ubuntu
     Docker image:
 
     ```
@@ -510,9 +399,9 @@ Build a Base RHEL Docker Image
     > *docker tag rhelbase:\<TAG\> \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>   
     > docker push \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>*
 
-Build a Golang Toolchain Docker Image from the Base RHEL Docker Image
+Build a Golang Toolchain Docker Image from the Base Ubuntu Docker Image
 ---------------------------------------------------------------------
-Once the base RHEL Docker image is created, complete the following steps
+Once the base Ubuntu Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
 1.  Make sure that the Docker Daemon and Docker Registry have
@@ -540,7 +429,7 @@ the file:
     WORKDIR $GOPATH
     ```
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
-    > step 5 of [Build a Base RHEL Docker Image](#build-a-base-rhel-docker-image).
+    > step 5 of [Build a Base Ubuntu Docker Image](#build-a-base-rhel-docker-image).
 
 4.  Make sure that a copy of the **go** directory is in your
     **$HOME** directory. If you used the

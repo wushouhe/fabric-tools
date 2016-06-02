@@ -631,7 +631,7 @@ the file:
 
       ```
       Dockerfile: |
-        from <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang
         COPY src $GOPATH/src
         WORKDIR $GOPATH
       ```
@@ -640,7 +640,7 @@ the file:
 
       ```
       Dockerfile: |
-        from <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang
       ```
 
 Build Hyperledger Fabric Docker Images
@@ -665,7 +665,7 @@ to build their respective Docker images.
 
     ```
     Dockerfile: |
-      from <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang
       # Install RocksDB
       RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
       WORKDIR /tmp/rocksdb
@@ -714,7 +714,7 @@ Test File Changes
 
     ```
     Dockerfile: |
-      from <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang
       # Install RocksDB
       RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
       WORKDIR /tmp/rocksdb
@@ -737,7 +737,7 @@ Test File Changes
 
     ```
     Dockerfile: |
-      from <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang
       COPY src $GOPATH/src
       WORKDIR $GOPATH
     ```
@@ -753,7 +753,7 @@ Test File Changes
 
     ```
     Dockerfile: |
-      from <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang
     ```
 
 5.  Edit
@@ -821,7 +821,13 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
     iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
     ```
 
-3. Run the Behave tests:
+3.  Shutdown any peer instances prior to running the Behave tests:
+
+    ```
+    sudo killall peer
+    ```
+
+4. Run the Behave tests:
 
     ```
     cd $HOME/src/github.com/hyperledger/fabric/bddtests
