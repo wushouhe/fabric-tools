@@ -531,7 +531,7 @@ Build a Base SLES Docker Image
     rm -rf "$target"
     ```
 
-3.  Execute the **mkimage-zypp.sh** script to create and import the RHEL
+3.  Execute the **mkimage-zypp.sh** script to create and import the SLES
     Docker image:
 
     ```
