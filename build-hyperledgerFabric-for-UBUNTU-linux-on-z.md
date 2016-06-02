@@ -15,8 +15,8 @@ control.
 
 The major components include:
 - [Golang programming language](#building-golang)
-- [Docker client and daemon](#docker-daemon-&-docker-registry)
-- [Docker registry](#docker-daemon-&-docker-registry)
+- [Docker client and daemon](#docker-daemon--docker-registry)
+- [Docker registry](#docker-daemon--docker-registry)
 - [Hyperledger Fabric](#build-the-hyperledger-fabric-core)
   - Peer
   - Membership and Security Services
