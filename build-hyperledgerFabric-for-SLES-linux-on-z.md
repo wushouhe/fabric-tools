@@ -14,10 +14,10 @@ kept in a repository that you create, thus remaining within your
 control.
 
 The major components include:
-- Golang programming language
-- Docker client and daemon
-- Docker registry
-- Hyperledger Fabric
+- [Golang programming language](#building-golang)
+- [Docker client and daemon](#installing-the-docker-client--daemon)
+- [Docker registry](#building-the-docker-registry)
+- [Hyperledger Fabric](#build-the-hyperledger-fabric-core)
   - Peer
   - Membership and Security Services
 
