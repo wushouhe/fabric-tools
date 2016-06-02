@@ -15,8 +15,8 @@ control.
 
 The major components include:
 - [Golang programming language](#building-golang)
-- [Docker client and daemon](#installing-the-docker-client--daemon)
-- [Docker registry](#building-the-docker-registry)
+- [Docker client and daemon](#docker-daemon-&-docker-registry)
+- [Docker registry](#docker-daemon-&-docker-registry)
 - [Hyperledger Fabric](#build-the-hyperledger-fabric-core)
   - Peer
   - Membership and Security Services
@@ -154,8 +154,8 @@ environment variable to use the new toolchain.  The **go** directory is typicall
     rm -rf go-linux-s390x-bootstrap*
     ```
 
-Docker
-======
+Docker Daemon & Docker Registry
+===============================
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
@@ -164,64 +164,53 @@ tests include tests that build both a peer service Docker image and a
 membership and security service Docker image. This is covered later in
 the document.
 
-A Docker registry is required for the Hyperledger Fabric environment and
-the process to build your own Docker registry from source is described
-below.
+A Docker registry is required for the Hyperledger Fabric environment if you
+are not going to access public Docker images.
+The reason to create your own registry is twofold. First, it is your
+private registry. Second, it allows for the use of the same unaltered
+Dockerfile contents used by the Docker daemon on the x86 platform. This
+eliminates source code changes to the Hyperledger fabric code.
 
-Installing the Docker Client / Daemon
+Installing the Docker Packages
 -------------------------------------
 
-1.  Install the Docker package:
+1.  Install the Docker and Docker registry packages:
 
     ```
-    sudo apt-get -y install docker.io
+    sudo apt-get -y install docker.io docker-registry
     ```
 
-    > ***NOTE:*** The installation of the docker.io package includes the starting
-    >of the Docker daemon.  
-    >  
-    >In order to issue Docker commands from a
+    > ***NOTE:*** In order to issue Docker commands from a
     > non-root user without prefixing the command with sudo, the non-root user
     >needs to be added to the  docker group:  
-    > **sudo groupadd docker**  
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
     > The \<non-root-user\> will have to logout and then login to pick up the change.
 
-2.  Update the Docker daemon start options:
+Update Docker Configuration files  
+---------------------------------
+
+1.  Update the Docker daemon start options:
 
     ```
     sudo systemctl stop docker.service
-    sudo sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock\"" /etc/default/docker
+    sudo sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375 --insecure-registry localhost:5050\"" /etc/default/docker
+    ```
+
+2.  Start the Docker daemon:
+
+    ```
     sudo systemctl start docker.service
     ```
 
-Building the Docker Registry
-----------------------------
-The Docker Registry 2.0 implementation for storing and distributing
-Docker images is part of the GitHub Docker Distribution project. The
-Docker Distribution project consists of a toolset to pack, ship, store,
-and deliver Docker content.
-
-The reason to create your own registry is twofold. First, it is your
-private registry. Second, you will create a registry for Linux on z
-Systems Docker daemons, which will allow the use of the same unaltered
-Dockerfile contents used by the Docker daemon on the x86 platform. This
-eliminates source code changes to the Hyperledger fabric code.
-
-1.  Install the Docker registry package:
+3.  Update the Docker Registry configuration file:
 
     ```
-    sudo apt-get -y install docker-registry
-    ```
-
-2.  Update the Docker Registry configuration file:
-
-    ```
+    sudo systemctl stop docker-registry.service
     sudo sed -i 's/5000/5050/g' /etc/docker/registry/config.yml
     ```
 
-3.  Start the Docker Registry:
+2.  Start the Docker registry:
 
     ```
     sudo systemctl start docker-registry.service
