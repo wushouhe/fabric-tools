@@ -207,7 +207,7 @@ shell script has the executable attribute set.
     ```
     sudo <docker-daemon-script-name>
     ```
-    > ***NOTE:*** In order to run Docker commands from a
+    > ***NOTE:*** In order to issue Docker commands from a
     > non-root user without prefixing the command with sudo, a docker group
     > needs to be created and the non-root user needs to be added to the
     > docker group:  

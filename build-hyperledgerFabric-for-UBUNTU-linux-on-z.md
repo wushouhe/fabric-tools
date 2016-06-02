@@ -180,7 +180,7 @@ Installing the Docker Client / Daemon
     > ***NOTE:*** The installation of the docker.io package includes the starting
     >of the Docker daemon.  
     >  
-    >In order to run the Docker commands from a
+    >In order to issue Docker commands from a
     > non-root user without prefixing the command with sudo, the non-root user
     >needs to be added to the  docker group:  
     > **sudo groupadd docker**  
