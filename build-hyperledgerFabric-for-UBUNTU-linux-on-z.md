@@ -387,7 +387,7 @@ the file:
     RUN apt-get -y install gcc g++ make git libbz2-dev zlib1g-dev libsnappy-dev
     COPY go /usr/local/go
     WORKDIR /tmp
-    RUN git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb && sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform && sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile && make shared_lib && INSTALL_PATH=/usr make install-shared && sudo ldconfig
+    RUN git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb && sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform && sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile && make shared_lib && INSTALL_PATH=/usr make install-shared && sudo ldconfig && rm -rf /tmp/rocksdb
     ENV GOPATH /opt/gopath
     ENV GOROOT /usr/local/go
     ENV PATH /usr/local/go/bin:$GOPATH/bin:$PATH
