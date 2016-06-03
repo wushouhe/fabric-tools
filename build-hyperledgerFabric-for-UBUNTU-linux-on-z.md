@@ -346,31 +346,23 @@ Build a Base Ubuntu Docker Image
     sudo apt-get -y install debootstrap
     ```
 
-3.  Execute the **debootsrap** utility to create and import the Ubuntu
-    Docker image:
+3.  Execute the **debootsrap** utility to create a base Ubuntu image directory and import it into Docker:
 
     ```
-    sudo debootstrap ubuntu-base
+    sudo debootstrap xenial ubuntu-base > /dev/null
+    sudo tar -C ubuntu-base -c . | docker import - ubuntu-base && sudo rm -rf $HOME/ubuntu-base
     ```
-4.  Obtain the **ubuntu-base** Docker image’s **TAG**.
-    The **ubuntu-base:\<TAG\>** is required to build the Golang
-    toolchain Docker image:
+4.  Ensure that the image has been imported:
 
     ```
     docker images
     ```
-    > Look for **ubuntu-base** in the REPOSITORY column and note the TAG name
-    > for **ubuntu-base**.
-    >
-    > In the example below the TAG is 16.4.
-    >
-    > ![](./media/docker-images-ubuntu.jpg)
-    >
+
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
     >  
-    > *docker tag ubuntu-base:\<TAG\> \<docker_registry_host_ip\>:5050/ubuntu-base:\<TAG\>   
-    > docker push \<docker_registry_host_ip\>:5050/ubuntu-ase:\<TAG\>*
+    > *docker tag ubuntu-base:latest \<docker_registry_host_ip\>:5050/ubuntu-base:latest  
+    > docker push \<docker_registry_host_ip\>:5050/ubuntu-base:latest*
 
 Build a Golang Toolchain Docker Image from the Base Ubuntu Docker Image
 ---------------------------------------------------------------------
@@ -390,17 +382,19 @@ to build a Golang toolchain Docker image:
 the file:
 
     ```
-    FROM rhelbase:<TAG>
-    RUN yum -y groupinstall "Development Tools"
+    FROM ubuntu-base:latest
+    RUN apt-get update
+    RUN apt-get -y install gcc g++ make git libbz2-dev zlib1g-dev libsnappy-dev
     COPY go /usr/local/go
-    ENV GOPATH=/opt/gopath
-    ENV GOROOT=/usr/local/go
-    ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+    WORKDIR /tmp
+    RUN git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb && sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform && sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile && make shared_lib && INSTALL_PATH=/usr make install-shared && sudo ldconfig
+    ENV GOPATH /opt/gopath
+    ENV GOROOT /usr/local/go
+    ENV PATH /usr/local/go/bin:$GOPATH/bin:$PATH
     RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
     WORKDIR $GOPATH
     ```
-    > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
-    > step 5 of [Build a Base Ubuntu Docker Image](#build-a-base-ubuntu-docker-image).
+    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
 4.  Make sure that a copy of the **go** directory is in your
     **$HOME** directory. If you used the
@@ -479,23 +473,14 @@ to build their respective Docker images.
     ```
     Dockerfile: |
       FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
       WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      ENV PATH $GOPATH/bin:$PATH
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
     > address of the host that is running your Docker Registry.  
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
 3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
 
@@ -528,18 +513,10 @@ Test File Changes
     ```
     Dockerfile: |
       FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
       WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      ENV PATH $GOPATH/bin:$PATH
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
     >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
@@ -621,12 +598,12 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 
     ```
     cd $HOME
-    sudo yum -y install python-setuptools
+    sudo apt-get -y install python-setuptools
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-    sudo python get-pip.py
-    sudo pip install --upgrade pip
-    sudo pip install behave nose docker-compose
-    sudo pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
+    sudo -H python get-pip.py
+    sudo -H pip install --upgrade pip
+    sudo -H pip install behave nose docker-compose
+    sudo -H pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
     ```
 2. Add a firewall rule to ensure traffic flow on the docker0 interface with a  destination port of 2375 (docker daemon API port).  The Behave tests take advantage of Docker containers to test the Fabric peer's functionality.
 
