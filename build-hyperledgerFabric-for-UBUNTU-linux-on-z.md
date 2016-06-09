@@ -130,6 +130,7 @@ components.
 
     ```
     cd $HOME
+    mkdir git && cd git
     git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
@@ -138,54 +139,33 @@ components.
     ```
     >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
-3.  Delete the rocksdb build directory:
-
-    ```
-    cd $HOME
-    rm -rf $HOME/rocksdb
-    ```
-
 Build the Hyperledger Fabric Core
 =================================
 The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
->***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
->was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
->If you built Golang using this document, you have already added the
->Golang **bin** directory to your **PATH**.
-
-1.  Download the Hyperledger Fabric code into a writeable directory:
+1.  Download the Hyperledger Fabric code into a working directory:
 
     ```
-    mkdir -p $HOME/src/github.com/hyperledger
-    export GOPATH=$HOME
-    cd $HOME/src/github.com/hyperledger
-    git clone https://github.com/hyperledger/fabric.git
-    cd fabric
+    cd $HOME
+    mkdir fabricwork
+    export GOPATH=$HOME/fabricwork
+    go get -d -v github.com/hyperledger/fabric
     ```
-2.  Setup environment variables:
 
-    ```
-    export GOROOT=/<golang_home>/go
-    export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
-    ```
-    > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 1 and 2 to your **.bash_profile** file.
-
-3.  Build the Hyperledger Fabric executable binaries. The peer binary
+2.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
     binary is the membership and security server that handles enrollment
     and certificate requests:
 
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build
-    cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -o membersrvc server.go
+    go build -v
+    cd $GOPATH/src/github.com/hyperledger/fabric//membersrvc
+    go build -v -o membersrvc server.go
     ```
-For a more permanent solution, you can create shell scripts to start the
+
+***Optional:*** If you are planning to run the Fabric executibles locally and not inside docker containainers, 
+you can create shell scripts to start the
 peer and the membership and security services executables in the
 background and re-direct logging output to a file.
 
@@ -211,11 +191,13 @@ background and re-direct logging output to a file.
 
 Build a Golang Toolchain Docker Image
 =====================================
-The section describes the steps required to build a Docker image that is
+This section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain built upon the
 Ubuntu operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
+
+***Alternative:*** This process is optional, as go and the go libraries can be installed from the Ubuntu repositories. Instead of rebuilding the whole toolchain inside the docker image, you can simply issue a ```RUN apt-get install golang-1.6-go``` command inside the Dockerfile.
 
 It is a two-step process to build the Golang toolchain Docker image:
 
