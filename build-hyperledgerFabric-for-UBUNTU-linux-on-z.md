@@ -216,24 +216,32 @@ transactions, e.g., invoke or query.
 
 Build a Base Ubuntu Docker Image
 ------------------------------
-
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Install the **debootstrap** utility:
-
     ```
     sudo apt-get -y install debootstrap
     ```
 
-3.  Execute the **debootsrap** utility to create a base Ubuntu image directory and import it into Docker:
-
+3.  Execute the **debootsrap** utility to create a base Ubuntu image directory:
     ```
     sudo debootstrap xenial ubuntu-base > /dev/null
-    sudo tar -C ubuntu-base -c . | docker import - ubuntu-base && sudo rm -rf $HOME/ubuntu-base
     ```
-4.  Ensure that the image has been imported:
 
+4.  Alter the ubuntu-base/etc/apt/sources.list file to include the universe repository:
+    ```
+    $ sudo vim ubuntu-base/etc/apt/sources.list
+    $ cat ubuntu-base/etc/apt/sources.list
+    deb http://ports.ubuntu.com/ubuntu-ports xenial main universe
+    ```
+
+5.  Import the base ubuntu image into docker:
+    ```
+    sudo tar -C ubuntu-base -c . | docker import - ubuntu-base
+    ```
+
+6.  Ensure that the image has been imported:
     ```
     docker images
     ```
@@ -270,7 +278,7 @@ the file:
     ```
     FROM ubuntu-base:latest
     RUN apt-get update
-    RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev
+    RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
     RUN ln -s /usr/lib/go-1.6/bin/go /usr/bin/go
     COPY rocksdb /tmp/rocksdb
     WORKDIR /tmp/rocksdb
