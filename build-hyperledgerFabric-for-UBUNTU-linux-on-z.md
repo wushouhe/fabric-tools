@@ -14,14 +14,14 @@ kept in a repository that you create, thus remaining within your
 control.
 
 The major components include:
-- [Golang programming language](#building-golang)
+- [Golang programming language](#installing-golang)
 - [Docker client and daemon](#docker-daemon--docker-registry)
 - [Docker registry](#docker-daemon--docker-registry)
 - [Hyperledger Fabric](#build-the-hyperledger-fabric-core)
   - Peer
   - Membership and Security Services
 
-Once all of the major components are built, custom Docker images are
+Once all of the major components are in place on the bulid system, custom Docker images are
 created for the Golang programming language, Hyperledger Fabric Peer,
 and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
@@ -40,118 +40,18 @@ For more information about the Hyperledger Fabric project, see
 > **/etc/sudoers** file to enable the **wheel** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
 > will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](#building-the-golang-toolchain). Otherwise, if you have root access…
-> Great! No need to worry about this.
 
-Building Golang
-===============
+Installing Golang
+=================
 The Hyperledger Fabric and the Docker Registry are written using the
 Golang programming language. Therefore, a Golang compiler needs to be
-built in order to compile the Hyperledger Fabric and Docker Registry
+installed in order to compile the Hyperledger Fabric and Docker Registry
 source code.
 
-Building Golang for Linux on z Systems is a two-step process:
-
-1.  Cross-compile the Golang bootstrap tool on an x86-based
-    machine running an up-to-date version of Linux.
-
-2.  Build the Golang toolchain on Linux on z Systems using the bootstrap
-    tool created in step 1.
-
-For information on how the Golang bootstrapping process works, see the
-blog entry at
-<http://dave.cheney.net/2015/10/16/bootstrapping-go-1-5-on-non-intel-platforms>.
-
-Cross-Compiling the Bootstrap Tool
-----------------------------------
-To build the Golang bootstrap tool you will need to use an
-x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x. The bootstrap tool can also be created on an x86-based
-machine running an up-to-date version of Ubuntu.  Simply replace the yum command
-with the equivalent apt-get command.
-
-1.  Install the dependencies:
+Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 
     ```
-    sudo yum install -y git wget tar gcc bzip2
-    ```
-2.  Create a directory for the amd64 version of the Golang toolchain:
-
-    ```
-    mkdir -p $HOME/go1.5.2
-    cd $HOME/go1.5.2
-    ```
-3.  Download the amd64 Golang toolchain binary and extract it:
-
-    ```
-    wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
-    tar -xvf go1.5.2.linux-amd64.tar.gz
-    ```
-
-4.  Clone the source code for the z Systems port of Golang:
-
-    ```
-    cd $HOME
-    git clone https://github.com/linux-on-ibm-z/go.git
-    ```
-5.  Build the bootstrap tool:
-
-    ```
-    export GOROOT_BOOTSTRAP=$HOME/go1.5.2/go
-    cd $HOME/go/src
-    GOOS=linux GOARCH=s390x ./bootstrap.bash
-    ```
-The bootstrap tool is placed into a bzip tarball named
-**go-linux-s390x-bootstrap.tbz** located in **$HOME** and
-is used in the next step to compile the Golang programming language
-source code on Linux on z Systems.
-
-Building the Golang Toolchain
------------------------------
-To build the Golang toolchain you need to have successfully built the
-Golang bootstrap tool outlined in the [Cross-Compiling the Bootstrap Tool](#cross-compiling-the-bootstrap-tool)
-section of this document. After building the bootstrap tool, login to
-your Linux on z Systems instance and perform the steps below.
-
-1.  Install the dependencies.
-
-    ```
-    sudo apt-get -y install git gcc make
-    ```
-2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
-
-    ```
-    cd $HOME
-    # scp or ftp $HOME/go-linux-s390x-bootstrap.tbz from the x86 system to $HOME on your Linux on z Systems instance
-    tar -xf go-linux-s390x-bootstrap.tbz
-    git clone https://github.com/linux-on-ibm-z/go.git
-    cd $HOME/go
-    git checkout release-branch.go1.6
-    ```
-3.  Build the Golang toolchain on Linux on z Systems and run all tests.
-
-    ```
-    export GOROOT_BOOTSTRAP=$HOME/go-linux-s390x-bootstrap
-    cd $HOME/go/src
-    ./all.bash
-    ```
-
-4. Copy the Golang directory to the final install directory,
-**\<golang_home\>**, and permanently update your **PATH**
-environment variable to use the new toolchain.  The **go** directory is typically located under **/usr/local**.
-
-    ```
-    sudo cp -ra $HOME/go /<golang_home>/
-    # Also add the following lines to ~/.bash_profile
-    export PATH=/<golang_home>/go/bin:$PATH
-    ```
-
-5. Cleanup and delete bootstrap files:
-
-    ```
-    cd $HOME
-    rm -rf go-linux-s390x-bootstrap*
+    sudo apt-get install golang-1.6-go
     ```
 
 Docker Daemon & Docker Registry
