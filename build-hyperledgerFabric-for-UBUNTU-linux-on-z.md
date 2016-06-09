@@ -50,9 +50,7 @@ source code.
 
 Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 
-    ```
     sudo apt-get install golang-1.6-go
-    ```
 
 Docker Daemon & Docker Registry
 ===============================
