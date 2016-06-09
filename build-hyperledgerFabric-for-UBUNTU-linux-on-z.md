@@ -197,7 +197,7 @@ Ubuntu operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
-***Alternative:*** This process is optional, as go and the go libraries can be installed from the Ubuntu repositories. Instead of rebuilding the whole toolchain inside the docker image, you can simply issue a ```RUN apt-get install golang-1.6-go``` command inside the Dockerfile.
+***Alternative:*** This process is optional, as go and the go libraries can be installed from the Ubuntu repositories. Instead of rebuilding the whole toolchain inside the docker image, you can simply issue a ```RUN apt-get install golang-1.6-go``` command inside the Dockerfile after building your base image in the next section.
 
 It is a two-step process to build the Golang toolchain Docker image:
 
