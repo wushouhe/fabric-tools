@@ -199,8 +199,8 @@ and re-direct logging output to a file.
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
 
-Build a Docker Image for Hyperledger Use
-========================================
+Build a Docker Image for Hyperledger Fabric Use
+===============================================
 This section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain and RocksDB built upon the
 Ubuntu operating system. There is no need to download any pre-existing
