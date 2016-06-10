@@ -375,7 +375,7 @@ components.
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
     make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
+    >***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**, if your Linux system is not running on a z Systems EC12.
 
 Build the Hyperledger Fabric Core
 =================================
