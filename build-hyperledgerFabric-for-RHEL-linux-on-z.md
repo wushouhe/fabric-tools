@@ -201,10 +201,14 @@ Installing the Docker Client / Daemon
     sudo mkdir -p /etc/docker
     sudo touch /etc/docker/docker.conf
     sudo chmod 664 /etc/docker/docker.conf
-    sudo echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050"' >> /etc/docker/docker.conf
+    ```
+5.  Edit the Docker configuration file created in the previous step and add the following line and save:
+
+    ```
+    DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050"
     ```
 
-5.  Create a Service for Docker:
+6.  Create a Service for Docker:
 
     a) Setup initial service file:
 
@@ -229,7 +233,7 @@ Installing the Docker Client / Daemon
     WantedBy=default.target
     ```
 
-6.  Start the Docker service and cleanup work directory:
+7.  Start the Docker service and cleanup work directory:
 
     ```
     sudo systemctl daemon-reload
