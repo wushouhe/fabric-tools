@@ -148,9 +148,18 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     ```
     cd $HOME
     mkdir fabricwork
-    export GOPATH=$HOME/fabricwork
     go get -d -v github.com/hyperledger/fabric
     ```
+
+2.  Setup environment variables for compiling and linking:
+
+    ```
+    export GOPATH=$HOME/fabricwork
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
+    export CGO_CFLAGS=" "
+    ```
+    > ***NOTE:*** Also add the the GOPATH environment variable to your .profile
+    > if you run the Hyperledger Fabric peer natively.
 
 2.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
@@ -164,10 +173,10 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     go build -v -o membersrvc server.go
     ```
 
-***Optional:*** If you are planning to run the Fabric executibles locally and not inside docker containainers,
-you can create shell scripts to start the
-peer and the membership and security services executables in the
-background and re-direct logging output to a file.
+***Optional:*** If you are planning to run the Fabric executibles locally and
+not inside docker containainers, you can create shell scripts to start the
+peer and the membership and security services executables in the background
+and re-direct logging output to a file.
 
 1.  Create a file called **fabric-peer.sh** located in
     **/usr/local/bin** with the executable attribute set:
@@ -215,7 +224,8 @@ transactions, e.g., invoke or query.
 Build a Base Ubuntu Docker Image
 --------------------------------
 1.  Make sure that your Docker Daemon and Docker Registry are started.
-    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
+    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section
+    above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Install the **debootstrap** utility:
     ```
@@ -301,8 +311,8 @@ to build a Golang and RocksDB Docker image:
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  **Optional:** If running fabric peers locally (not inside Docker images), update your
-    Hyperledger Fabric peer’s configuration file and save.
+8.  **Optional:** If running fabric peers locally (not inside Docker images),
+    update your Hyperledger Fabric peer’s configuration file and save.
     The following changes inform the peer to use your Golang toolchain
     Docker image when executing Chaincode transactions locally:
 
@@ -361,14 +371,16 @@ to build their respective Docker images.
     ```
     golang:
       Dockerfile:  |
-        FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb:latest
         COPY src $GOPATH/src
         WORKDIR $GOPATH
 
     car:
       Dockerfile:  |
-        FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb:latest
     ```
+    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
+    > address of the host that is running your Docker Registry.  
 
 4.  Build the **hyperledger-peer** and **membersrvc** Docker images:
     ```
@@ -450,16 +462,12 @@ Running the Unit Tests
     ```bash
     #!/bin/bash
     export GOPATH=<parent-directory>
-    export GOROOT=/<golang_home>/go
-    export PATH=/<golang_home>/go/bin:$PATH
     go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
     ```
     > ***NOTE:*** If you have root access and would like to run the unit
     > tests, simply set the environment variables listed above and then
-    > issue the go test command. Replace
-    > **\<golang_home\>** with the directory where Golang was
-    > installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
-    > Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
+    > issue the go test command.  
+    > Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.   
 
 3.  Invoke the unit-tests.sh script:
 
@@ -498,6 +506,6 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 4. Run the Behave tests:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/bddtests
+    cd $GOPATH/src/github.com/hyperledger/fabric/bddtests
     behave
     ```
