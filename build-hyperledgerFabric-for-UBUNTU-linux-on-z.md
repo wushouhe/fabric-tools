@@ -14,14 +14,14 @@ kept in a repository that you create, thus remaining within your
 control.
 
 The major components include:
-- [Golang programming language](#building-golang)
+- [Golang programming language](#installing-golang)
 - [Docker client and daemon](#docker-daemon--docker-registry)
 - [Docker registry](#docker-daemon--docker-registry)
 - [Hyperledger Fabric](#build-the-hyperledger-fabric-core)
   - Peer
   - Membership and Security Services
 
-Once all of the major components are built, custom Docker images are
+Once all of the major components are in place on the bulid system, custom Docker images are
 created for the Golang programming language, Hyperledger Fabric Peer,
 and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
@@ -40,119 +40,17 @@ For more information about the Hyperledger Fabric project, see
 > **/etc/sudoers** file to enable the **wheel** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
 > will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](#building-the-golang-toolchain). Otherwise, if you have root access…
-> Great! No need to worry about this.
 
-Building Golang
-===============
+Installing Golang
+=================
 The Hyperledger Fabric and the Docker Registry are written using the
 Golang programming language. Therefore, a Golang compiler needs to be
-built in order to compile the Hyperledger Fabric and Docker Registry
+installed in order to compile the Hyperledger Fabric and Docker Registry
 source code.
 
-Building Golang for Linux on z Systems is a two-step process:
+Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 
-1.  Cross-compile the Golang bootstrap tool on an x86-based
-    machine running an up-to-date version of Linux.
-
-2.  Build the Golang toolchain on Linux on z Systems using the bootstrap
-    tool created in step 1.
-
-For information on how the Golang bootstrapping process works, see the
-blog entry at
-<http://dave.cheney.net/2015/10/16/bootstrapping-go-1-5-on-non-intel-platforms>.
-
-Cross-Compiling the Bootstrap Tool
-----------------------------------
-To build the Golang bootstrap tool you will need to use an
-x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x. The bootstrap tool can also be created on an x86-based
-machine running an up-to-date version of Ubuntu.  Simply replace the yum command
-with the equivalent apt-get command.
-
-1.  Install the dependencies:
-
-    ```
-    sudo yum install -y git wget tar gcc bzip2
-    ```
-2.  Create a directory for the amd64 version of the Golang toolchain:
-
-    ```
-    mkdir -p $HOME/go1.5.2
-    cd $HOME/go1.5.2
-    ```
-3.  Download the amd64 Golang toolchain binary and extract it:
-
-    ```
-    wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
-    tar -xvf go1.5.2.linux-amd64.tar.gz
-    ```
-
-4.  Clone the source code for the z Systems port of Golang:
-
-    ```
-    cd $HOME
-    git clone https://github.com/linux-on-ibm-z/go.git
-    ```
-5.  Build the bootstrap tool:
-
-    ```
-    export GOROOT_BOOTSTRAP=$HOME/go1.5.2/go
-    cd $HOME/go/src
-    GOOS=linux GOARCH=s390x ./bootstrap.bash
-    ```
-The bootstrap tool is placed into a bzip tarball named
-**go-linux-s390x-bootstrap.tbz** located in **$HOME** and
-is used in the next step to compile the Golang programming language
-source code on Linux on z Systems.
-
-Building the Golang Toolchain
------------------------------
-To build the Golang toolchain you need to have successfully built the
-Golang bootstrap tool outlined in the [Cross-Compiling the Bootstrap Tool](#cross-compiling-the-bootstrap-tool)
-section of this document. After building the bootstrap tool, login to
-your Linux on z Systems instance and perform the steps below.
-
-1.  Install the dependencies.
-
-    ```
-    sudo apt-get -y install git gcc make
-    ```
-2.  Transfer the bootstrap file to your Linux on z Systems instance and clone the Golang source:
-
-    ```
-    cd $HOME
-    # scp or ftp $HOME/go-linux-s390x-bootstrap.tbz from the x86 system to $HOME on your Linux on z Systems instance
-    tar -xf go-linux-s390x-bootstrap.tbz
-    git clone https://github.com/linux-on-ibm-z/go.git
-    cd $HOME/go
-    git checkout release-branch.go1.6
-    ```
-3.  Build the Golang toolchain on Linux on z Systems and run all tests.
-
-    ```
-    export GOROOT_BOOTSTRAP=$HOME/go-linux-s390x-bootstrap
-    cd $HOME/go/src
-    ./all.bash
-    ```
-
-4. Copy the Golang directory to the final install directory,
-**\<golang_home\>**, and permanently update your **PATH**
-environment variable to use the new toolchain.  The **go** directory is typically located under **/usr/local**.
-
-    ```
-    sudo cp -ra $HOME/go /<golang_home>/
-    # Also add the following lines to ~/.bash_profile
-    export PATH=/<golang_home>/go/bin:$PATH
-    ```
-
-5. Cleanup and delete bootstrap files:
-
-    ```
-    cd $HOME
-    rm -rf go-linux-s390x-bootstrap*
-    ```
+    sudo apt-get install golang-1.6-go
 
 Docker Daemon & Docker Registry
 ===============================
@@ -232,6 +130,7 @@ components.
 
     ```
     cd $HOME
+    mkdir git && cd git
     git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
@@ -240,54 +139,33 @@ components.
     ```
     >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
-3.  Delete the rocksdb build directory:
-
-    ```
-    cd $HOME
-    rm -rf $HOME/rocksdb
-    ```
-
 Build the Hyperledger Fabric Core
 =================================
 The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
->***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
->was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
->If you built Golang using this document, you have already added the
->Golang **bin** directory to your **PATH**.
-
-1.  Download the Hyperledger Fabric code into a writeable directory:
+1.  Download the Hyperledger Fabric code into a working directory:
 
     ```
-    mkdir -p $HOME/src/github.com/hyperledger
-    export GOPATH=$HOME
-    cd $HOME/src/github.com/hyperledger
-    git clone https://github.com/hyperledger/fabric.git
-    cd fabric
+    cd $HOME
+    mkdir fabricwork
+    export GOPATH=$HOME/fabricwork
+    go get -d -v github.com/hyperledger/fabric
     ```
-2.  Setup environment variables:
 
-    ```
-    export GOROOT=/<golang_home>/go
-    export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
-    ```
-    > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 1 and 2 to your **.bash_profile** file.
-
-3.  Build the Hyperledger Fabric executable binaries. The peer binary
+2.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
     binary is the membership and security server that handles enrollment
     and certificate requests:
 
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build
-    cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -o membersrvc server.go
+    go build -v
+    cd $GOPATH/src/github.com/hyperledger/fabric//membersrvc
+    go build -v -o membersrvc server.go
     ```
-For a more permanent solution, you can create shell scripts to start the
+
+***Optional:*** If you are planning to run the Fabric executibles locally and not inside docker containainers, 
+you can create shell scripts to start the
 peer and the membership and security services executables in the
 background and re-direct logging output to a file.
 
@@ -313,11 +191,13 @@ background and re-direct logging output to a file.
 
 Build a Golang Toolchain Docker Image
 =====================================
-The section describes the steps required to build a Docker image that is
+This section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain built upon the
 Ubuntu operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
+
+***Alternative:*** This process is optional, as go and the go libraries can be installed from the Ubuntu repositories. Instead of rebuilding the whole toolchain inside the docker image, you can simply issue a ```RUN apt-get install golang-1.6-go``` command inside the Dockerfile after building your base image in the next section.
 
 It is a two-step process to build the Golang toolchain Docker image:
 
@@ -336,24 +216,32 @@ transactions, e.g., invoke or query.
 
 Build a Base Ubuntu Docker Image
 ------------------------------
-
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Install the **debootstrap** utility:
-
     ```
     sudo apt-get -y install debootstrap
     ```
 
-3.  Execute the **debootsrap** utility to create a base Ubuntu image directory and import it into Docker:
-
+3.  Execute the **debootsrap** utility to create a base Ubuntu image directory:
     ```
     sudo debootstrap xenial ubuntu-base > /dev/null
-    sudo tar -C ubuntu-base -c . | docker import - ubuntu-base && sudo rm -rf $HOME/ubuntu-base
     ```
-4.  Ensure that the image has been imported:
 
+4.  Alter the ubuntu-base/etc/apt/sources.list file to include the universe repository:
+    ```
+    $ sudo vim ubuntu-base/etc/apt/sources.list
+    $ cat ubuntu-base/etc/apt/sources.list
+    deb http://ports.ubuntu.com/ubuntu-ports xenial main universe
+    ```
+
+5.  Import the base ubuntu image into docker:
+    ```
+    sudo tar -C ubuntu-base -c . | docker import - ubuntu-base
+    ```
+
+6.  Ensure that the image has been imported:
     ```
     docker images
     ```
@@ -364,90 +252,81 @@ Build a Base Ubuntu Docker Image
     > *docker tag ubuntu-base:latest \<docker_registry_host_ip\>:5050/ubuntu-base:latest  
     > docker push \<docker_registry_host_ip\>:5050/ubuntu-base:latest*
 
-Build a Golang Toolchain Docker Image from the Base Ubuntu Docker Image
----------------------------------------------------------------------
+Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
+-------------------------------------------------------------------------
 Once the base Ubuntu Docker image is created, complete the following steps
-to build a Golang toolchain Docker image:
+to build a Golang and RocksDB Docker image:
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
-2.  Create a Dockerfile:
-
+2.  Create a working directory for building the Docker images:
     ```
     cd $HOME
-    vi Dockerfile
+    mkdir dockerbuild
+    mv git/rocksdb dockerbuild
+    cd dockerbuild
     ```
-3. Cut and paste the following lines into your Dockerfile and then save
-the file:
 
+3.  Create a Dockerfile:
+    ```
+    vim Dockerfile
+    ```
+
+4. Cut and paste the following lines into your Dockerfile and then save
+the file:
     ```
     FROM ubuntu-base:latest
     RUN apt-get update
-    RUN apt-get -y install gcc g++ make git libbz2-dev zlib1g-dev libsnappy-dev
-    COPY go /usr/local/go
-    WORKDIR /tmp
-    RUN git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb && sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform && sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile && make shared_lib && INSTALL_PATH=/usr make install-shared && sudo ldconfig && rm -rf /tmp/rocksdb
-    ENV GOPATH /opt/gopath
-    ENV GOROOT /usr/local/go
-    ENV PATH /usr/local/go/bin:$GOPATH/bin:$PATH
-    RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+    RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
+    RUN ln -s /usr/lib/go-1.6/bin/go /usr/bin/go
+    COPY rocksdb /tmp/rocksdb
+    WORKDIR /tmp/rocksdb
+    RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+    ENV GOPATH=/root
     WORKDIR $GOPATH
     ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
-
-4.  Make sure that a copy of the **go** directory is in your
-    **$HOME** directory. If you used the
-    **$HOME** directory when performing the instructions
-    in section [Building the Golang Toolchain](#building-the-golang-toolchain)
-    then you should already have your built **go** directory contained in
-    **$HOME**.
 
 5.  Issue the **docker build** command:
-
     ```
-    cd $HOME
-    docker build -t <docker_registry_host_ip>:5050/s390x/golang -f <docker_file> .
+    docker build -t <docker_registry_host_ip>:5050/s390x/golang_rocksdb -f Dockerfile .
     ```
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry. Replace
-    > **\<docker_file\>** with **Dockerfile** or the name of your file
-    > containing the Docker statements listed in step 3.
+    > address of the host that is running your Docker Registry.
 
-6.  Confirm that your new image was created by issuing the **docker
-    images** command.
+6.  Confirm that your new image was created by issuing the **docker images** command.
 
-7.  Push your new Golang toolchain Docker image to your Docker Registry:
-
+7.  **Optional:** Push your new Golang toolchain Docker image to your Docker Registry:
     ```
-    docker push <docker_registry_host_ip>:5050/s390x/golang
+    docker push <docker_registry_host_ip>:5050/s390x/golang_rocksdb
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  Update your Hyperledger Fabric peer’s configuration file and save.
+8.  **Optional:** If running fabric peers locally (not inside Docker images), update your 
+    Hyperledger Fabric peer’s configuration file and save.
     The following changes inform the peer to use your Golang toolchain
-    Docker image when executing Chaincode transactions:
+    Docker image when executing Chaincode transactions locally:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
-    vi core.yaml
+    cd $GOPATH/src/github.com/hyperledger/fabric/peer
+    vim core.yaml
     ```
 
-    a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
+  a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
 
       ```
       Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
         COPY src $GOPATH/src
         WORKDIR $GOPATH
       ```
 
-      b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+  b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
 
       ```
       Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       ```
 
 Build Hyperledger Fabric Docker Images
@@ -461,18 +340,16 @@ However, if you would like to run your peer(s) or membership services
 components in their own Docker containers, perform the following steps
 to build their respective Docker images.
 
-1.  Update the Hyperledger Fabric’s core.yaml file and save:
-
+1.  Update the Hyperledger Fabric’s core.yaml file:
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
-    vi core.yaml
+    cd $GOPATH/src/github.com/hyperledger/fabric/peer
+    vim core.yaml
     ```
 
-2. Replace the **peer.Dockerfile** parameter (located within lines 90-100) with the following:
-
+2. Replace the **peer.Dockerfile** parameter in the following section (around line 100):
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
@@ -482,10 +359,22 @@ to build their respective Docker images.
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
     > address of the host that is running your Docker Registry.  
 
-3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
-
+3.  Alter the same FROM statement in the chaincode.golang.Dockerfile and chaincode.car.Dockerfile sections around like 285:
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/core/container
+    golang:
+      Dockerfile:  |
+        FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
+        COPY src $GOPATH/src
+        WORKDIR $GOPATH
+    
+    car:
+      Dockerfile:  |
+        FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
+    ```
+
+4.  Build the **hyperledger-peer** and **membersrvc** Docker images:
+    ```
+    cd $GOPATH/src/github.com/hyperledger/fabric/core/container
     go test -timeout=20m -run BuildImage_Peer
     go test -timeout=20m -run BuildImage_Obcca
     ```
@@ -493,7 +382,6 @@ to build their respective Docker images.
 
 4.  Verify that the **hyperledger-peer** and **membersrvc** images are
     displayed after issuing a **docker images** command:
-
     ```
     docker images
     ```
@@ -507,68 +395,60 @@ to invoking the unit tests.
 Test File Changes
 -----------------
 1.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
+    *$GOPATH/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **peer.Dockerfile** parameter with the following:
-
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
       WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
 2.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
+    *$GOPATH/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **chaincode.golang.Dockerfile** parameter with the
     following:
 
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       COPY src $GOPATH/src
       WORKDIR $GOPATH
     ```
 
 3.  Perform steps 1 and 2 for file:  
-    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
+    *$GOPATH/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
 
-4.  Edit *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
-
+4.  Edit *$GOPATH/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
     a) Perform steps 1 and 2 for the chaincodetest.yaml file.
-
     b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
-
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
     ```
 
 5.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
+    *$GOPATH/src/github.com/hyperledger/fabric/core/container/controller_test.go*
     and replace **busybox** with **s390x/busybox**.
 
 > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
 > that is running your Docker Registry.
 
-Running the Unit Tests
+Running the Unit Tests (**NOTE** this is probably not working)
 ----------------------
-
 1.  Bring up a window (via ssh or screen) of the system where you built
     the Hyperledger Fabric components and start the Fabric Peer:
-
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
+    cd $GOPATH/src/github.com/hyperledger/fabric/peer
     sudo ./peer node start
     ```
 
 2.  From another window of the same Linux system, create an executable
     script called **unit-tests.sh** in **$HOME** using the
     following lines:
-
     ```bash
     #!/bin/bash
     export GOPATH=<parent-directory>
