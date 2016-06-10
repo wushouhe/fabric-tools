@@ -108,7 +108,7 @@ Update Docker Configuration files
     sudo sed -i 's/5000/5050/g' /etc/docker/registry/config.yml
     ```
 
-2.  Start the Docker registry:
+4.  Start the Docker registry:
 
     ```
     sudo systemctl start docker-registry.service
@@ -161,7 +161,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
     > if you run the Hyperledger Fabric peer natively.
 
-2.  Build the Hyperledger Fabric executable binaries. The peer binary
+3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
     binary is the membership and security server that handles enrollment
     and certificate requests:
@@ -367,22 +367,7 @@ to build their respective Docker images.
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
     > address of the host that is running your Docker Registry.  
 
-3.  Alter the same FROM statement in the chaincode.golang.Dockerfile and chaincode.car.Dockerfile sections around like 285:
-    ```
-    golang:
-      Dockerfile:  |
-        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb:latest
-        COPY src $GOPATH/src
-        WORKDIR $GOPATH
-
-    car:
-      Dockerfile:  |
-        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb:latest
-    ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.  
-
-4.  Build the **hyperledger-peer** and **membersrvc** Docker images:
+3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/core/container
     go test -timeout=20m -run BuildImage_Peer
