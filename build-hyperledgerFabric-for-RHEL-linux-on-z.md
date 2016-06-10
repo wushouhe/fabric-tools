@@ -398,7 +398,6 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
 
     ```
     export GOPATH=$HOME/fabricwork
-    export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
     export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
@@ -570,7 +569,7 @@ the file:
 6.  Confirm that your new image was created by issuing the **docker
     images** command.
 
-7.  Push your new Golang toolchain Docker image to your Docker Registry:
+7.  Push your new Golang and RocksDB Docker image to your Docker Registry:
 
     ```
     docker push <docker_registry_host_ip>:5050/s390x/golang_rocksdb
@@ -579,7 +578,7 @@ the file:
     > address of the host that is running your Docker Registry.
 
 8.  Update your Hyperledger Fabric peer’s configuration file and save.
-    The following changes inform the peer to use your Golang toolchain
+    The following changes inform the peer to use your Golang and RocksDB
     Docker image when executing Chaincode transactions:
 
     ```
