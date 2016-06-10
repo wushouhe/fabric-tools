@@ -582,7 +582,7 @@ the file:
     Docker image when executing Chaincode transactions:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric/peer
     vi core.yaml
     ```
 
