@@ -340,6 +340,7 @@ eliminates source code changes to the Hyperledger fabric code.
       [Install]
       WantedBy=default.target
       ```
+    >***NOTE:*** Be sure that all lines begin in column 1 when you paste in the above contents.
 
 9.  Start the Docker Registry service:
 
