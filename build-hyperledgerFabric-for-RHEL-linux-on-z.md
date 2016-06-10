@@ -170,43 +170,70 @@ below.
 
 Installing the Docker Client / Daemon
 -------------------------------------
-Refer to [Linux on z Systems Docker installation
-instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
-for downloading and installing the RHEL distribution of Docker on Linux
-on z Systems.
 
-For a more permanent solution when starting the Docker Daemon:
-
-1.  Copy the Docker binary file to a directory that is contained within the
-    current **PATH** environment variable:
-
-    ```
-    sudo cp /<current_path_of_docker_file>/docker /usr/local/bin
-    ```
-2. Create a shell script in **/usr/local/bin** to start the Docker
-Daemon and redirect all output to a logging file. Ensure that the
-shell script has the executable attribute set.
-
-    ```
-    #!/bin/bash
-    /usr/local/bin/docker daemon -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050 > /var/log/docker.log 2>&1 &
-    ```
-    > ***NOTE:*** If your Docker Registry is running on another system, change
-    > **localhost** to either the hostname or IP address of the system
-    > running the Docker Registry. Also note that the port number of the
-    > insecure registry matches the port number that the Docker Registry is
-    > listening on.
-
-3.  Ensure that the device-mapper package is up to date:
+1.  Install pre-req package for Docker:
 
     ```
     sudo yum -y install device-mapper
     ```
-4. Start the Docker Daemon shell script:
+
+2.  Download the Docker binary tarball and untar the file:
 
     ```
-    sudo <docker-daemon-script-name>
+    cd $HOME
+    wget ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.2/docker-1.10.1-rhel7.2-20160408.tar.gz
+    tar -xf docker-1.10.1-rhel7.2-20160408.tar.gz
     ```
+
+3.  Copy the Docker binary file to a directory that is contained within the
+    current **PATH** environment variable:
+
+    ```
+    sudo cp docker-1.10.1-rhel7.2-20160408/docker /usr/bin
+    ```
+
+4.  Create a Docker configuration file:
+
+    ```
+    sudo mkdir -p /etc/docker
+    sudo touch /etc/docker/docker.conf
+    sudo chmod 664 /etc/docker/docker.conf
+    sudo echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050"' >> /etc/docker/docker.conf
+    ```
+
+5.  Create a Service for Docker:
+
+    a) Setup initial service file:
+
+    ```
+    sudo touch /etc/systemd/system/docker.service
+    sudo chmod 664 /etc/systemd/system/docker.service
+    ```
+
+    b) Copy and paste the following contents into **/etc/systemd/system/docker.service** :
+
+    ```
+    [Unit]
+    Description=Docker Application Container Engine
+    Documentation=https://docs.docker.com
+
+    [Service]
+    Type=notify
+    ExecStart=/usr/bin/docker daemon \$DOCKER_OPTS
+    EnvironmentFile=-/etc/docker/docker.conf
+
+    [Install]
+    WantedBy=default.target
+    ```
+
+6.  Start the Docker service and cleanup work directory:
+
+    ```
+    sudo systemctl daemon-reload
+    sudo systemctl start docker.service
+    rm -rf $HOME/ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.2/docker-1.10.1-rhel7.2-20160408.tar.gz
+    ```
+
     > ***NOTE:*** In order to issue Docker commands from a
     > non-root user without prefixing the command with sudo, a docker group
     > needs to be created and the non-root user needs to be added to the
@@ -241,98 +268,75 @@ eliminates source code changes to the Hyperledger fabric code.
 2.  Create a distribution directory and clone the source code:
 
     ```
-    mkdir -p $HOME/src/github.com/docker
-    cd $HOME/src/github.com/docker
+    mkdir -p $HOME/git/src/github.com/docker
+    cd $HOME/git/src/github.com/docker
     git clone https://github.com/docker/distribution.git
-    cd $HOME/src/github.com/docker/distribution
+    cd $HOME/git/src/github.com/docker/distribution
     git checkout v2.3.0
     ```
 3.  Set **GOPATH** and **DISTRIBUTION_DIR** environment variables:
 
     ```
-    export DISTRIBUTION_DIR=$HOME/src/github.com/docker/distribution
-    export GOPATH=$HOME
+    export DISTRIBUTION_DIR=$HOME/git/src/github.com/docker/distribution
+    export GOPATH=$HOME/git
     export GOPATH=$DISTRIBUTION_DIR/Godeps/_workspace:$GOPATH
     ```
 4. Build the distribution binaries:
 
     ```
-    cd $HOME/src/github.com/docker/distribution
-    make PREFIX=$HOME clean binaries
+    cd $HOME/git/src/github.com/docker/distribution
+    sudo make PREFIX=$HOME clean binaries
+    sudo cp $HOME/bin/registry /usr/bin
     ```
 5.  Run the Test Suite:
 
     ```
     make PREFIX=$HOME test
     ```
-6.  Start the Docker Registry:
 
-    > ***NOTE:*** The Docker Registry fetches the configuration from
-    > **$DISTRIBUTION_DIR/ cmd/registry/config.yml**. The default
-    > filesystem location where the Docker Registry stores images is
-    > **/var/lib/registry.**
+6.  Tailor the Docker Registry configuration file:
 
-    a) Copy the **config-dev.yml** file to **config.yml**:
+    ```
+    sudo cp $DISTRIBUTION_DIR/cmd/registry/config-dev.yml /etc/docker/registry-config.yml
+    sudo sed -i "s/redis/inmemory/" /etc/docker/registry-config.yml
+    sudo sed -i "s/5000/5050/" /etc/docker/registry-config.yml
+    ```
 
-      ```
-      cp $DISTRIBUTION_DIR/cmd/registry/config-dev.yml $DISTRIBUTION_DIR/cmd/registry/config.yml
-      ```
-    b)  Tailor the Docker Registry configuration file and save:
-
-    - Change the default storage caching mechanism. If you are not
-      using redis for storage caching, edit
-      **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-      **storage.cache.blobdescriptor** parameter from **redis** to
-      **inmemory**.
-
-    - Change the default listening port of the Docker Registry. Edit
-     **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-     **http.addr** parameter from **5000** to **5050**. This change
-     is required because port 5000 conflicts with the Hyperledger
-     Fabric peer’s REST service port, which uses port 5000.
-
-    c) Create the default directory to store images, if it does not exist:
+7.  Create the default directory to store images, if it does not exist:
 
       ```
       sudo mkdir -p /var/lib/registry
       ```
-    d) Start the Docker Registry:
+
+8. Create a Service for the Docker Registry
+
+    a) Setup initial service file:
+
+      ```
+      sudo touch /etc/systemd/system/docker-registry.service
+      sudo chmod 664 /etc/systemd/system/docker-registry.service
+      ```
+
+    b) Copy and paste the following contents into **/etc/systemd/system/docker-registry.service** :
+
+      ```
+      [Unit]
+      Description=Docker Application Container Engine
+      Documentation=https://github.com/docker/distribution
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/bin/registry /etc/docker/registry-config.yml
+
+      [Install]
+      WantedBy=default.target
+      ```
+
+9.  Start the Docker Registry service:
 
     ```
-    $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
-    ```
-
-7.  Cleanup Docker directories:
-
-    ```
-    cd $HOME
-    rm docker-*
-    ```
-
-For a more permanent solution when starting the Docker Registry:
-
-1.  Setup homes for the Docker Registry executable binary and its
-    configuration file:
-
-    ```
-    sudo mkdir /etc/docker-registry
-    sudo cp $DISTRIBUTION_DIR/cmd/registry/config.yml /etc/docker-registry
-    sudo cp $HOME/bin/registry /usr/local/bin
-    ```
-
-2.  Create a shell script in **/usr/local/bin** to start the Docker
-    Registry in the background and redirect all output to a
-    logging file. Ensure that the shell script has the executable
-    attribute set.
-
-    ```bash
-    #!/bin/bash
-    /usr/local/bin/registry /etc/docker-registry/config.yml > /var/log/docker-registry.log 2>&1 &
-    ```
-3.  Start the Docker Registry:
-
-    ```
-    sudo <docker-registry-script-name>
+    sudo systemctl daemon-reload
+    sudo systemctl start docker-registry.service
     ```
 
 For more information on the Docker Distribution project, see
@@ -354,6 +358,7 @@ components.
 
     ```
     cd $HOME
+    mkdir -p git/rocksdb && cd git
     git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
@@ -361,13 +366,6 @@ components.
     make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
     >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
-
-3.  Delete the rocksdb build directory:
-
-    ```
-    cd $HOME
-    rm -rf $HOME/rocksdb
-    ```
 
 Build the Hyperledger Fabric Core
 =================================
@@ -381,22 +379,21 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
 1.  Download the Hyperledger Fabric code into a writeable directory:
 
     ```
-    mkdir -p $HOME/src/github.com/hyperledger
-    export GOPATH=$HOME
-    cd $HOME/src/github.com/hyperledger
-    git clone https://github.com/hyperledger/fabric.git
-    cd fabric
+    cd $HOME
+    mkdir fabricwork
+    go get -d -v github.com/hyperledger/fabric
     ```
 2.  Setup environment variables:
 
     ```
+    export GOPATH=$HOME/fabricwork
     export GOROOT=/<golang_home>/go
     export PATH=/<golang_home>/go/bin:$PATH
     export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 1 and 2 to your **.bash_profile** file.
+    > environment variables in this step to your **.bash_profile** file.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc
@@ -405,13 +402,13 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
 
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build
+    go build -v
     cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -o membersrvc server.go
+    go build -v -o membersrvc server.go
     ```
-For a more permanent solution, you can create shell scripts to start the
-peer and the membership and security services executables in the
-background and re-direct logging output to a file.
+For a more permanent solution for running natively, you can create
+shell scripts to start the peer and the membership and security services
+executables in the background and re-direct logging output to a file.
 
 1.  Create a file called **fabric-peer.sh** located in
     **/usr/local/bin** with the executable attribute set:
