@@ -158,7 +158,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
     export CGO_CFLAGS=" "
     ```
-    > ***NOTE:*** Also add the the GOPATH environment variable to your .profile
+    > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
     > if you run the Hyperledger Fabric peer natively.
 
 2.  Build the Hyperledger Fabric executable binaries. The peer binary
@@ -169,7 +169,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
     go build -v
-    cd $GOPATH/src/github.com/hyperledger/fabric//membersrvc
+    cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
     go build -v -o membersrvc server.go
     ```
 
