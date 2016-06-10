@@ -107,6 +107,9 @@ The bootstrap tool is placed into a bzip tarball named
 is used in the next step to compile the Golang programming language
 source code on Linux on z Systems.
 
+> ***NOTE:*** If you do not have access to an x86-based Linux system, you can
+> download the Golang Bootstrap tool from <https://ibm.box.com/s/bij71tcn51zw5cw119kxa8rdbxfdo20z>.
+
 Building the Golang Toolchain
 -----------------------------
 To build the Golang toolchain you need to have successfully built the
