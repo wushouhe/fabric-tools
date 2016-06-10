@@ -249,6 +249,8 @@ Installing the Docker Client / Daemon
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
     > The \<non-root-user\> will have to logout and then login to pick up the change.
+    > You may also have to restart the docker service if the docker group did not
+    > previously exist.
 
 Building the Docker Registry
 ----------------------------
