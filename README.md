@@ -1,4 +1,4 @@
-> **NOTE:** On June 9, 2016, a number of changes were applied to the Hyperledger Fabric codebase.  This has affected numerous sections of the documentation contained within this repository.  We are working on updating this documentation as soon as possible.  Thanks for your understanding.
+**NOTE: On June 9, 2016, a number of changes were applied to the Hyperledger Fabric codebase.  This has affected numerous sections of the documentation contained within this repository.  We are working on updating this documentation as soon as possible.  Thanks for your understanding.**
 
 
 Overview
