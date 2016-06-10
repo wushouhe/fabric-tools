@@ -189,22 +189,20 @@ background and re-direct logging output to a file.
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
 
-Build a Golang Toolchain Docker Image
-=====================================
+Build a Docker Image for Hyperledger Use
+========================================
 This section describes the steps required to build a Docker image that is
-comprised of the Golang programming language toolchain built upon the
+comprised of the Golang programming language toolchain and RocksDB built upon the
 Ubuntu operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
-***Alternative:*** This process is optional, as go and the go libraries can be installed from the Ubuntu repositories. Instead of rebuilding the whole toolchain inside the docker image, you can simply issue a ```RUN apt-get install golang-1.6-go``` command inside the Dockerfile after building your base image in the next section.
-
-It is a two-step process to build the Golang toolchain Docker image:
+It is a two-step process to build the Docker image:
 
 1.  Build your own Ubuntu Docker image from scratch.
 
-2.  Build a Golang toolchain Docker image from the base Ubuntu Docker
-    image built in step 1.
+2.  Build a Golang toolchain Docker image, which includes RocksDB, from the base
+    Ubuntu Docker image built in step 1.
 
 This Docker image is used by the Hyperledger Fabric peer component when
 deploying Chaincode. The peer communicates with the Docker Daemon to
@@ -215,7 +213,7 @@ and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
 Build a Base Ubuntu Docker Image
-------------------------------
+--------------------------------
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
@@ -258,7 +256,8 @@ Once the base Ubuntu Docker image is created, complete the following steps
 to build a Golang and RocksDB Docker image:
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
-    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above for installing, configuring and starting the Docker Daemon and Docker Registry.
+    Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section above
+    for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Create a working directory for building the Docker images:
     ```
@@ -273,8 +272,7 @@ to build a Golang and RocksDB Docker image:
     vim Dockerfile
     ```
 
-4. Cut and paste the following lines into your Dockerfile and then save
-the file:
+4. Cut and paste the following lines into your Dockerfile and then save the file:
     ```
     FROM ubuntu-base:latest
     RUN apt-get update
