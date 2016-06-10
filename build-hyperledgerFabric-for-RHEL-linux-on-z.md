@@ -231,7 +231,7 @@ Installing the Docker Client / Daemon
     ```
     sudo systemctl daemon-reload
     sudo systemctl start docker.service
-    rm -rf $HOME/ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.2/docker-1.10.1-rhel7.2-20160408.tar.gz
+    rm -rf $HOME/docker-1.10.1-rhel7.2-20160408*
     ```
 
     > ***NOTE:*** In order to issue Docker commands from a
@@ -380,8 +380,9 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
 
     ```
     cd $HOME
-    mkdir fabricwork
-    go get -d -v github.com/hyperledger/fabric
+    mkdir -p fabricwork/src/github.com/hyperledger
+    cd fabricwork/src/github.com/hyperledger
+    git clone https://github.com/hyperledger/fabric.git
     ```
 2.  Setup environment variables:
 
