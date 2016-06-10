@@ -294,7 +294,7 @@ eliminates source code changes to the Hyperledger fabric code.
 
     ```
     cd $HOME/git/src/github.com/docker/distribution
-    sudo make PREFIX=$HOME clean binaries
+    make PREFIX=$HOME clean binaries
     sudo cp $HOME/bin/registry /usr/bin
     ```
 5.  Run the Test Suite:
