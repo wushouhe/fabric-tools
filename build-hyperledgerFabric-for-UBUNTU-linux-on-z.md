@@ -241,7 +241,7 @@ Build a Base Ubuntu Docker Image
 4.  Alter the ubuntu-base/etc/apt/sources.list file to include the universe repository:
     ```
     sudo vim ubuntu-base/etc/apt/sources.list
-    # Add the following line within the ubuntu-base/etc/apt/sources.list
+    # Append universe to the following source
     deb http://ports.ubuntu.com/ubuntu-ports xenial main universe
     ```
 
