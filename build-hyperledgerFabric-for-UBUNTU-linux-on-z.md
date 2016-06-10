@@ -283,7 +283,7 @@ the file:
     COPY rocksdb /tmp/rocksdb
     WORKDIR /tmp/rocksdb
     RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-    ENV GOPATH=/root
+    ENV GOPATH=/opt/gopath
     WORKDIR $GOPATH
     ```
 
