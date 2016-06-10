@@ -431,20 +431,20 @@ executables in the background and re-direct logging output to a file.
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
 
-Build a Golang Toolchain Docker Image
-=====================================
+Build a Docker Image for Hyperledger Fabric Use
+===============================================
 The section describes the steps required to build a Docker image that is
-comprised of the Golang programming language toolchain built upon the
+comprised of the Golang programming language toolchain and RocksDB built upon the
 RHEL operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
-It is a two-step process to build the Golang toolchain Docker image:
+It is a two-step process to build the Docker image:
 
 1.  Build your own RHEL Docker image from scratch.
 
-2.  Build a Golang toolchain Docker image from the base RHEL Docker
-    image built in step 1.
+2.  Build a Golang toolchain Docker image, which includes RocksDB, from the
+    base RHEL Docker image built in step 1.
 
 This Docker image is used by the Hyperledger Fabric peer component when
 deploying Chaincode. The peer communicates with the Docker Daemon to
@@ -508,7 +508,7 @@ Build a Base RHEL Docker Image
     > *docker tag rhelbase:\<TAG\> \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>   
     > docker push \<docker_registry_host_ip\>:5050/rhelbase:\<TAG\>*
 
-Build a Golang Toolchain Docker Image from the Base RHEL Docker Image
+Build a Golang and RocksDB Docker Image from the Base RHEL Docker Image
 ---------------------------------------------------------------------
 Once the base RHEL Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
@@ -522,8 +522,13 @@ to build a Golang toolchain Docker image:
 
     ```
     cd $HOME
+    mkdir dockerbuild
+    mv git/rocksdb dockerbuild
+    mv go dockerbuild
+    cd dockerbuild
     vi Dockerfile
     ```
+
 3. Cut and paste the following lines into your Dockerfile and then save
 the file:
 
@@ -531,6 +536,9 @@ the file:
     FROM rhelbase:<TAG>
     RUN yum -y groupinstall "Development Tools"
     COPY go /usr/local/go
+    COPY rocksdb /tmp/rocksdb
+    WORKDIR /tmp/rocksdb
+    RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
     ENV GOPATH=/opt/gopath
     ENV GOROOT=/usr/local/go
     ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -540,23 +548,14 @@ the file:
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
     > step 5 of [Build a Base RHEL Docker Image](#build-a-base-rhel-docker-image).
 
-4.  Make sure that a copy of the **go** directory is in your
-    **$HOME** directory. If you used the
-    **$HOME** directory when performing the instructions
-    in section [Building the Golang Toolchain](#building-the-golang-toolchain)
-    then you should already have your built **go** directory contained in
-    **$HOME**.
-
-5.  Issue the **docker build** command:
+4.  Issue the **docker build** command:
 
     ```
-    cd $HOME
-    docker build -t <docker_registry_host_ip>:5050/s390x/golang -f <docker_file> .
+    cd $HOME/dockerbuild
+    docker build -t <docker_registry_host_ip>:5050/s390x/golang_rocksdb .
     ```
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry. Replace
-    > **\<docker_file\>** with **Dockerfile** or the name of your file
-    > containing the Docker statements listed in step 3.
+    > address of the host that is running your Docker Registry.
 
 6.  Confirm that your new image was created by issuing the **docker
     images** command.
@@ -564,7 +563,7 @@ the file:
 7.  Push your new Golang toolchain Docker image to your Docker Registry:
 
     ```
-    docker push <docker_registry_host_ip>:5050/s390x/golang
+    docker push <docker_registry_host_ip>:5050/s390x/golang_rocksdb
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
@@ -582,7 +581,7 @@ the file:
 
       ```
       Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
         COPY src $GOPATH/src
         WORKDIR $GOPATH
       ```
@@ -591,7 +590,7 @@ the file:
 
       ```
       Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
+        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       ```
 
 Build Hyperledger Fabric Docker Images
@@ -616,14 +615,7 @@ to build their respective Docker images.
 
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
@@ -632,13 +624,13 @@ to build their respective Docker images.
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
     > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.  
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
+    > address of the host that is running your Docker Registry.
+
 
 3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/core/container
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric/core/container
     go test -timeout=20m -run BuildImage_Peer
     go test -timeout=20m -run BuildImage_Obcca
     ```
@@ -660,19 +652,12 @@ to invoking the unit tests.
 Test File Changes
 -----------------
 1.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
+    *$HOME/fabricwork/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **peer.Dockerfile** parameter with the following:
 
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN yum -y install snappy-devel zlib-devel bzip2-devel
-      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       # Copy GOPATH src and install Peer
       COPY src $GOPATH/src
       RUN mkdir -p /var/hyperledger/db
@@ -680,24 +665,23 @@ Test File Changes
       ENV PATH $GOPATH/bin:$PATH
       RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
     ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
 
 2.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
+    *$HOME/fabricwork/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
     and replace the **chaincode.golang.Dockerfile** parameter with the
     following:
 
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
       COPY src $GOPATH/src
       WORKDIR $GOPATH
     ```
 
 3.  Perform steps 1 and 2 for file:  
-    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
+    *$HOME/fabricwork/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
 
-4.  Edit *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
+4.  Edit *$HOME/fabricwork/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
 
     a) Perform steps 1 and 2 for the chaincodetest.yaml file.
 
@@ -705,11 +689,11 @@ Test File Changes
 
     ```
     Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
     ```
 
 5.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
+    *$HOME/fabricwork/src/github.com/hyperledger/fabric/core/container/controller_test.go*
     and replace **busybox** with **s390x/busybox**.
 
 > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
@@ -722,7 +706,7 @@ Running the Unit Tests
     the Hyperledger Fabric components and start the Fabric Peer:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric/peer
     sudo ./peer node start
     ```
 
@@ -781,6 +765,6 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 4. Run the Behave tests:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/bddtests
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric/bddtests
     behave
     ```
