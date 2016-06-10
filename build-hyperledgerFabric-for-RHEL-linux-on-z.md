@@ -226,7 +226,7 @@ Installing the Docker Client / Daemon
 
     [Service]
     Type=notify
-    ExecStart=/usr/bin/docker daemon \$DOCKER_OPTS
+    ExecStart=/usr/bin/docker daemon $DOCKER_OPTS
     EnvironmentFile=-/etc/docker/docker.conf
 
     [Install]
