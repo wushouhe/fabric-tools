@@ -311,10 +311,10 @@ to build a Golang and RocksDB Docker image:
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  **Optional:** If running fabric peers locally (not inside Docker images),
-    update your Hyperledger Fabric peer’s configuration file and save.
+8.  Update your Hyperledger Fabric peer’s configuration file and save.
     The following changes inform the peer to use your Golang toolchain
-    Docker image when executing Chaincode transactions locally:
+    Docker image when executing Chaincode transactions both locally and
+    inside Docker containers that are running the Hyperledger code:
 
     ```
     cd $GOPATH/src/github.com/hyperledger/fabric/peer
