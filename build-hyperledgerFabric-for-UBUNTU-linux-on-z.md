@@ -164,7 +164,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     go build -v -o membersrvc server.go
     ```
 
-***Optional:*** If you are planning to run the Fabric executibles locally and not inside docker containainers, 
+***Optional:*** If you are planning to run the Fabric executibles locally and not inside docker containainers,
 you can create shell scripts to start the
 peer and the membership and security services executables in the
 background and re-direct logging output to a file.
@@ -303,7 +303,7 @@ the file:
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  **Optional:** If running fabric peers locally (not inside Docker images), update your 
+8.  **Optional:** If running fabric peers locally (not inside Docker images), update your
     Hyperledger Fabric peer’s configuration file and save.
     The following changes inform the peer to use your Golang toolchain
     Docker image when executing Chaincode transactions locally:
@@ -313,21 +313,21 @@ the file:
     vim core.yaml
     ```
 
-  a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
+    a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
 
-      ```
-      Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-        COPY src $GOPATH/src
-        WORKDIR $GOPATH
-      ```
+    ```
+    Dockerfile: |
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
+      COPY src $GOPATH/src
+      WORKDIR $GOPATH
+    ```
 
-  b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+    b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
 
-      ```
-      Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-      ```
+    ```
+    Dockerfile: |
+      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
+    ```
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
@@ -366,7 +366,7 @@ to build their respective Docker images.
         FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
         COPY src $GOPATH/src
         WORKDIR $GOPATH
-    
+
     car:
       Dockerfile:  |
         FROM 10.20.92.155:5050/s390x/golang_rocksdb:latest
@@ -437,7 +437,7 @@ Test File Changes
 > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
 > that is running your Docker Registry.
 
-Running the Unit Tests (**NOTE** this is probably not working)
+Running the Unit Tests
 ----------------------
 1.  Bring up a window (via ssh or screen) of the system where you built
     the Hyperledger Fabric components and start the Fabric Peer:
