@@ -234,18 +234,20 @@ Build a Base Ubuntu Docker Image
 
 3.  Execute the **debootsrap** utility to create a base Ubuntu image directory:
     ```
+    cd $HOME
     sudo debootstrap xenial ubuntu-base > /dev/null
     ```
 
 4.  Alter the ubuntu-base/etc/apt/sources.list file to include the universe repository:
     ```
     sudo vim ubuntu-base/etc/apt/sources.list
-    cat ubuntu-base/etc/apt/sources.list
+    # Add the following line within the ubuntu-base/etc/apt/sources.list
     deb http://ports.ubuntu.com/ubuntu-ports xenial main universe
     ```
 
 5.  Import the base ubuntu image into docker:
     ```
+    cd $HOME
     sudo tar -C ubuntu-base -c . | docker import - ubuntu-base
     ```
 
