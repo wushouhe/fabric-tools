@@ -147,8 +147,9 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
 
     ```
     cd $HOME
-    mkdir fabricwork
-    go get -d -v github.com/hyperledger/fabric
+    mkdir -p fabricwork/github.com/hyperledger
+    cd fabricwork/github.com/hyperledger
+    git clone https://github.com/hyperledger/fabric.git
     ```
 
 2.  Setup environment variables for compiling and linking:
