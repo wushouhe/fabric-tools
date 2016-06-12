@@ -304,33 +304,33 @@ if you are not going to access public Docker images.
 
 7.  Create the default directory to store images, if it does not exist:
 
-      ```
-      sudo mkdir -p /var/lib/registry
-      ```
+    ```
+    sudo mkdir -p /var/lib/registry
+    ```
 
 8. Create a Service for the Docker Registry
 
     a) Setup initial service file:
 
-      ```
-      sudo touch /etc/systemd/system/docker-registry.service
-      sudo chmod 664 /etc/systemd/system/docker-registry.service
-      ```
+    ```
+    sudo touch /etc/systemd/system/docker-registry.service
+    sudo chmod 664 /etc/systemd/system/docker-registry.service
+    ```
 
     b) Copy and paste the following contents into **/etc/systemd/system/docker-registry.service** :
 
-      ```
-      [Unit]
-      Description=Docker Application Container Engine
-      Documentation=https://github.com/docker/distribution
+    ```
+    [Unit]
+    Description=Docker Application Container Engine
+    Documentation=https://github.com/docker/distribution
 
-      [Service]
-      Type=simple
-      ExecStart=/usr/bin/registry /etc/docker/registry-config.yml
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/registry /etc/docker/registry-config.yml
 
-      [Install]
-      WantedBy=default.target
-      ```
+    [Install]
+    WantedBy=default.target
+    ```
     >***NOTE:*** Be sure that all lines begin in column 1 when you paste in the above contents.
 
 9.  Start the Docker Registry service:
