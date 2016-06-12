@@ -39,7 +39,8 @@ For more information about the Hyperledger Fabric project, see
 > user has been added to the **sudo** group. In addition, update the
 > **/etc/sudoers** file to enable the **sudo** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
-> will contain the **go** executable ( **/usr/lib/go-1.6/bin** ) to the **secure_path** variable.
+> will contain the **go** executable, **/usr/lib/go-1.6/bin**, to the
+> **secure_path** variable.
 
 Installing Golang
 =================
@@ -65,25 +66,25 @@ is used by the Hyperledger Fabric peer, membership and security service
 components.
 
 1.  RocksDB is written using the C++ programming language. Make sure
-that the C++ compiler is installed along with the following compression packages:
+    that the C++ compiler is installed along with the following compression packages:
 
-```
-sudo apt-get -y install g++ libsnappy-dev zlib1g-dev libbz2-dev
-```
+    ```
+    sudo apt-get -y install g++ libsnappy-dev zlib1g-dev libbz2-dev
+    ```
 
 2.  Download and build RocksDB:
 
-```
-cd $HOME
-mkdir git && cd git
-git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
-cd rocksdb
-sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
-make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
-```
->***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**,
-if your Linux system is not running on a z Systems EC12.
+    ```
+    cd $HOME
+    mkdir git && cd git
+    git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
+    cd rocksdb
+    sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
+    sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
+    make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
+    ```
+    >***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**,
+    if your Linux system is not running on a z Systems EC12.
 
 Docker Daemon & Docker Registry
 ===============================
