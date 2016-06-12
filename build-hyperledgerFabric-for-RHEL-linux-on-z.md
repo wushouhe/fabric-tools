@@ -139,7 +139,7 @@ your Linux on z Systems instance and perform the steps below.
     ```
 
 4. Copy the Golang directory to the final install directory,
-**/usr/local/go**, and permanently update your **PATH**
+**/usr/local**, and permanently update your **PATH**
 environment variable to use the new toolchain.  The **go** directory is typically located under **/usr/local**.
 
     ```
