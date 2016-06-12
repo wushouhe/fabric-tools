@@ -382,7 +382,7 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 2. Add a firewall rule to ensure traffic flow on the docker0 interface with a  destination port of 2375 (docker daemon API port).  The Behave tests take advantage of Docker containers to test the Fabric peer's functionality.
 
     ```
-    iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
+    sudo iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
     ```
 
 3.  Shutdown any peer instances prior to running the Behave tests:
