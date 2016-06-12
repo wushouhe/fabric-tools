@@ -358,8 +358,11 @@ the steps below:
 ```
 sudo rm -rf /var/hyperledger
 cd $GOPATH/src/github.com/hyperledger/fabric
-sudo GOPATH=/home/bcuser/fabricwork make unit-test
+sudo GOPATH=<parent-directory> make unit-test
 ```
+
+> **NOTE:** Change **\<parent-directory\>** to the root directory of where
+the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Behave Tests
 ============
