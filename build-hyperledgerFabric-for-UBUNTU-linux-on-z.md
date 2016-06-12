@@ -192,7 +192,7 @@ Build a Base Ubuntu Docker Image
     sudo cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
     ```
 
-5.  Import the base ubuntu image into docker:
+5.  Import the ubuntu-base image into docker:
 
     ```
     cd $HOME
