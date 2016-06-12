@@ -472,7 +472,8 @@ the file:
 
     ```
     FROM rhelbase:<TAG>
-    RUN yum -y groupinstall "Development Tools" zlib-devel snappy-devel bzip2-devel
+    RUN yum -y groupinstall "Development Tools"
+    RUN yum -y install zlib-devel snappy-devel bzip2-devel
     COPY go /usr/local/go
     COPY rocksdb /tmp/rocksdb
     WORKDIR /tmp/rocksdb
