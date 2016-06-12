@@ -245,8 +245,8 @@ to build a Golang and RocksDB Docker image:
     COPY rocksdb /tmp/rocksdb
     WORKDIR /tmp/rocksdb
     RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-    ENV PATH=$PATH:$GOROOT/bin
     ENV GOPATH=/opt/gopath
+    ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
     WORKDIR $GOPATH
     ```
 
