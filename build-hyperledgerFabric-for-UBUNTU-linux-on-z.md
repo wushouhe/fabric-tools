@@ -303,7 +303,7 @@ services for enrollment and certificate authority tasks.
     make peer membersrvc
     ```
 
-    >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin directory**
+    >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin** directory
 
 ***Optional:*** If you are planning to run the Fabric executables locally and
 not inside docker containainers, you can create shell scripts to start the
