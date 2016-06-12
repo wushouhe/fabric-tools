@@ -315,7 +315,7 @@ and re-direct logging output to a file.
 
     ```bash
     #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin/peer
+    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin
     ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
@@ -326,7 +326,7 @@ and re-direct logging output to a file.
 
     ```bash
     #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin/membersrvc
+    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin
     ./membersrvc > /var/log/membersrvc.log 2>&1 &
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
