@@ -295,7 +295,7 @@ services for enrollment and certificate authority tasks.
     and security server that handles enrollment and certificate requests.
     In addition to the peer and membersrvc executables, supporting Docker images
     are created for development use. The **Makefile** is altered to allow for the
-    use of your own hyperledger/fabric-baseimage:
+    use of your own **hyperledger/fabric-baseimage** Docker image:
 
     ```
     sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
