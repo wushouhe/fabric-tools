@@ -315,22 +315,24 @@ and re-direct logging output to a file.
 
     ```bash
     #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin
+    export GOPATH=<parent-directory>
+    cd $GOPATH/src/github.com/hyperledger/fabric/build/bin
     ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
-    the Hyperledger Fabric code is located.
+    the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
     with the executable attribute set:
 
     ```bash
     #!/bin/bash
+    export GOPATH=<parent-directory>
     cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin
     ./membersrvc > /var/log/membersrvc.log 2>&1 &
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
-    the Hyperledger Fabric code is located.
+    the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
