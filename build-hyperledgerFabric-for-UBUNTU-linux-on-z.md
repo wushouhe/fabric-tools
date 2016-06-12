@@ -280,14 +280,12 @@ services for enrollment and certificate authority tasks.
     git clone https://github.com/hyperledger/fabric.git
     ```
 
-2.  Setup environment variables for compiling and linking:
+2.  Setup environment variable for compiling and linking:
 
     ```
     export GOPATH=$HOME/fabricwork
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
     ```
-    > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
+    > ***NOTE:*** Also add the the GOPATH environment variable to root's **.profile** file
     > if you run the Hyperledger Fabric peer or membersrvc executables natively.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
