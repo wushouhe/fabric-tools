@@ -192,7 +192,7 @@ Build a Base Ubuntu Docker Image
 4.  Update the sources.list file for repository access:
 
     ```
-    cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
+    sudo cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
     ```
 
 5.  Import the base ubuntu image into docker:
