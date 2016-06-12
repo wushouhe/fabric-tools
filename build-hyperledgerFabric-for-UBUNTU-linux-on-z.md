@@ -356,8 +356,9 @@ If you feel inclined to run the Hyperledger Fabric unit tests, follow
 the steps below:
 
 ```
+sudo rm -rf /var/hyperledger
 cd $GOPATH/src/github.com/hyperledger/fabric
-make unit-test
+sudo GOPATH=/home/bcuser/fabricwork make unit-test
 ```
 
 Behave Tests
