@@ -400,7 +400,7 @@ Build a Base RHEL Docker Image
 
 2.  Copy and paste the contents of
     <https://github.com/docker/docker/blob/master/contrib/mkimage-yum.sh>
-    into a new file, **$HOME/mkimage-yum.sh**, file on your local RHEL system where the Docker image
+    into a new file, **mkimage-yum.sh**, file on your local RHEL system where the Docker image
     will be created. Place the script into **/usr/local/bin**. Ensure
     the new script file has the executable attribute set.
 
