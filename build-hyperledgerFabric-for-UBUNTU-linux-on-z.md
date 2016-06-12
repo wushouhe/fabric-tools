@@ -211,8 +211,8 @@ Build a Base Ubuntu Docker Image
     > ***NOTE:*** Optionally, you can place this base image into your Docker
     > registry’s repository by issuing the commands:
     >  
-    > *docker tag ubuntu-base:latest \<docker_registry_host_ip\>:5050/ubuntu-base:latest  
-    > docker push \<docker_registry_host_ip\>:5050/ubuntu-base:latest*
+    > *docker tag ubuntu-base \<docker_registry_host_ip\>:5050/ubuntu-base  
+    > docker push \<docker_registry_host_ip\>:5050/ubuntu-base*
 
 Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
 -------------------------------------------------------------------------
@@ -260,7 +260,7 @@ to build a Golang and RocksDB Docker image:
 7.  **Optional:** Push your new Golang toolchain and RocksDB Docker image
     to your Docker Registry:
     ```
-    docker tag hyperledger/fabric-baseimage:latest <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
+    docker tag hyperledger/fabric-baseimage <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
     docker push <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
