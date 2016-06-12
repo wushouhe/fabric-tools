@@ -57,7 +57,7 @@ Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 ```
 
 > ***NOTE:*** Also append **/usr/lib/go-1.6/bin** to the PATH environment variable
-in your **.profile** file if you run the Hyperledger Fabric peer natively.
+in root's **.profile** file if you run the Hyperledger Fabric peer natively.
 
 Build and Install RocksDB
 =========================
