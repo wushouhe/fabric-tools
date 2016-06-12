@@ -95,12 +95,9 @@ can both run in Docker containers. Instructions for building both a peer
 service Docker image and a membership and security service Docker image
 are covered later in this document.
 
-A local Docker registry can be used for the Hyperledger Fabric environment if you
-are not going to access public Docker images.
-The reason to create your own registry is twofold. First, it is your
-private registry. Second, it allows for the use of the same unaltered
-Dockerfile contents used by the Docker daemon on the x86 platform. This
-eliminates source code changes to the Hyperledger fabric code.
+A local Docker registry can be used for the Hyperledger Fabric environment
+if you are not going to access public Docker images.
+
 
 Installing the Docker Packages
 -------------------------------------
