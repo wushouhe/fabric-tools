@@ -275,8 +275,8 @@ services for enrollment and certificate authority tasks.
 
     ```
     cd $HOME
-    mkdir -p fabricwork/github.com/hyperledger
-    cd fabricwork/github.com/hyperledger
+    mkdir -p fabricwork/src/github.com/hyperledger
+    cd fabricwork/src/github.com/hyperledger
     git clone https://github.com/hyperledger/fabric.git
     ```
 
