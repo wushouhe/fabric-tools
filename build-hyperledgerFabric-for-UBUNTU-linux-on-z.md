@@ -328,7 +328,7 @@ and re-direct logging output to a file.
     ```bash
     #!/bin/bash
     export GOPATH=<parent-directory>
-    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin
+    cd $GOPATH/src/github.com/hyperledger/fabric/build/bin
     ./membersrvc > /var/log/membersrvc.log 2>&1 &
     ```
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
