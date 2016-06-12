@@ -288,7 +288,7 @@ services for enrollment and certificate authority tasks.
     export CGO_CFLAGS=" "
     ```
     > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
-    > if you run the Hyperledger Fabric peer natively.
+    > if you run the Hyperledger Fabric peer or membersrvc executables natively.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc binary is the membership
