@@ -57,7 +57,7 @@ Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 ```
 
 > ***NOTE:*** Also append **/usr/lib/go-1.6/bin** to the PATH environment variable
-in root's **.profile** file if you run the Hyperledger Fabric peer natively.
+in your **.profile** file and root's **.profile** file for using the Golang toolchain.
 
 Build and Install RocksDB
 =========================
@@ -114,6 +114,9 @@ Installing the Docker Packages
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
     > The \<non-root-user\> may have to logout and then login to pick up the change.
+    > If you didn't update your **.profile** file when installing Golang,
+    > you'll have to update your PATH environment variable:  
+    > **export PATH=$PATH:/usr/lib/go-1.6/bin**
 
 Update Docker Configuration files  
 ---------------------------------
