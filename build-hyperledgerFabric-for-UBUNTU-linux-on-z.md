@@ -21,8 +21,8 @@ The major components include:
   - Peer
   - Membership and Security Services
 
-Once all of the major components are in place on the bulid system, custom Docker images are
-created for the Golang programming language, Hyperledger Fabric Peer,
+Once all of the major components are in place on the bulid system, custom Docker
+images are created for the Golang programming language, Hyperledger Fabric Peer,
 and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
 environment.
@@ -83,8 +83,8 @@ components.
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
     make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
-    >***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**,
-    if your Linux system is not running on a z Systems EC12.
+    >***NOTE:*** Change the value of **-march** to the z Systems model type, e.g.,
+    > **z196**, if your Linux system is not running on a z Systems EC12.
 
 Docker Daemon & Docker Registry
 ===============================
@@ -280,13 +280,13 @@ services for enrollment and certificate authority tasks.
     git clone https://github.com/hyperledger/fabric.git
     ```
 
-2.  Setup environment variable for compiling and linking:
-
+2.  Setup environment variable prior to building the Hyperledger Fabric components:
     ```
     export GOPATH=$HOME/fabricwork
     ```
-    > ***NOTE:*** Also add the the GOPATH environment variable to root's **.profile** file
-    > if you run the Hyperledger Fabric peer or membersrvc executables natively.
+    > ***NOTE:*** Also add the the GOPATH environment variable to root's
+    > **.profile** file if you run the Hyperledger Fabric peer or
+    > membersrvc executables natively.
 
 3.  Build the Hyperledger Fabric executable binaries. The peer binary
     runs validating peer nodes and the membersrvc binary is the membership
@@ -300,7 +300,6 @@ services for enrollment and certificate authority tasks.
     cd $GOPATH/src/github.com/hyperledger/fabric
     make peer membersrvc
     ```
-
     >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin** directory
 
 ***Optional:*** If you are planning to run the Fabric executables locally and
@@ -366,7 +365,7 @@ Behave Tests
 ============
 A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
 
-1. Install pre-reqs for Behave:
+1. Install prerequisites for Behave:
 
     ```
     cd $HOME
