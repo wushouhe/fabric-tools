@@ -91,10 +91,9 @@ Docker Daemon & Docker Registry
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
-can both run in Docker containers. The Hyperledger Fabric peer unit
-tests include tests that build both a peer service Docker image and a
-membership and security service Docker image. This is covered later in
-the document.
+can both run in Docker containers. Instructions for building both a peer
+service Docker image and a membership and security service Docker image
+are covered later in this document.
 
 A local Docker registry can be used for the Hyperledger Fabric environment if you
 are not going to access public Docker images.
