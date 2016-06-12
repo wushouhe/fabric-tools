@@ -424,7 +424,6 @@ Build a Base RHEL Docker Image
     Docker image:
 
     ```
-    cd $HOME
     sudo mkimage-yum.sh rhelbase
     ```
 5.  Obtain the **rhelbase** Docker image’s **TAG**.
