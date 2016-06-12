@@ -69,6 +69,9 @@ To build the Golang bootstrap tool you will need to use an
 x86-based machine running an up-to-date version of Linux, e.g.,
 RHEL 7.x.
 
+> ***NOTE:*** If you do not have access to an x86-based Linux system, you can
+> download the Golang Bootstrap tool from <https://ibm.box.com/s/bij71tcn51zw5cw119kxa8rdbxfdo20z>.
+
 1.  Install the dependencies:
 
     ```
@@ -104,9 +107,6 @@ The bootstrap tool is placed into a bzip tarball named
 **go-linux-s390x-bootstrap.tbz** located in **$HOME** and
 is used in the next step to compile the Golang programming language
 source code on Linux on z Systems.
-
-> ***NOTE:*** If you do not have access to an x86-based Linux system, you can
-> download the Golang Bootstrap tool from <https://ibm.box.com/s/bij71tcn51zw5cw119kxa8rdbxfdo20z>.
 
 Building the Golang Toolchain
 -----------------------------
