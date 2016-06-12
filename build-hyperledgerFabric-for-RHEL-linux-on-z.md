@@ -516,9 +516,10 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     cd fabricwork/src/github.com/hyperledger
     git clone https://github.com/hyperledger/fabric.git
     ```
-2.  Setup environment variable prior to building the Hyperledger Fabric components:
+2.  Setup environment variables prior to building the Hyperledger Fabric components:
 
     ```
+    export GOROOT=/usr/local/go
     export GOPATH=$HOME/fabricwork
     ```
     > ***NOTE:*** Also add the the GOPATH environment variable to root's
