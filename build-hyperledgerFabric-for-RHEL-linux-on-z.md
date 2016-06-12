@@ -41,9 +41,8 @@ For more information about the Hyperledger Fabric project, see
 > user has been added to the **wheel** group. In addition, update the
 > **/etc/sudoers** file to enable the **wheel** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
-> will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](#building-the-golang-toolchain).
+> will contain the **go** executable, **/usr/local/go/bin**, to the
+> **secure_path** variable.
 
 Building Golang
 ===============
