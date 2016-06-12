@@ -16,13 +16,14 @@ Usage:  `basename $0` options
 
 This script installs and configures a Hyperledger Fabric environment on a Linux on
 IBM z Systems instance.  The execution of this script assumes that you are starting
-from a new Linux on z Systems instance.  The script will autodetect the Linux distribution
-(currently RHEL, SLES, and Ubuntu) as well as the z Systems machine type, and build out
-the necessary components.
+from a new Linux on z Systems instance.  The script will autodetect the Linux
+distribution (currently RHEL, SLES, and Ubuntu) as well as the z Systems machine
+type, and build out the necessary components.  After running this script, logout and
+then login to pick up updates to Hyperledger Fabric specific environment variables.
 
-NOTE: Upon completion of the script, source .bash_profile
-(or .profile for Ubuntu) to update your PATH and Hyperledger Fabric related
-environment variables.
+NOTE: Prerequisite packages are required to build and use RocksDB which may not
+reside in your default package management repositories.  There is the possibility
+that extra steps might be needed to add the additional repositories to your system.
 
 The default action of the script -- without any arguments -- is
 to build the following components:
@@ -35,28 +36,41 @@ to build the following components:
 -b   Build the hyperledger/fabric-baseimage. If this option is not specifed,
      the default action is to pull the hyperledger/fabric-base image from Docker Hub.
 
--c   Rebuild the Hyperledger Fabric components.  A previous installation is required to use this option.
+-c   Rebuild the Hyperledger Fabric components.  A previous installation is
+     required to use this option.
 
 EOF
   exit 1
 }
 
-# Install pre-req packages for an RHEL Hyperledger build
-pre_req_rhel() {
-  echo -e "\nInstalling RHEL pre-req packages\n"
+# Install prerequisite packages for an RHEL Hyperledger build
+prereq_rhel() {
+  echo -e "\nInstalling RHEL prerequisite packages\n"
   yum -y -q install git gcc gcc-c++ snappy-devel zlib-devel bzip2-devel git wget tar python-setuptools device-mapper
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to install pre-requisite packages.\n"
+    exit 1
+  fi
 }
 
-# Install pre-req packages for an SLES Hyperledger build
-pre_req_sles() {
-  echo -e "\nInstalling SLES pre-req packages\n"
+# Install prerequisite packages for an SLES Hyperledger build
+prereq_sles() {
+  echo -e "\nInstalling SLES prerequisite packages\n"
   zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel python-setuptools
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to install pre-requisite packages.\n"
+    exit 1
+  fi
 }
 
-# Install pre-req packages for an Unbuntu Hyperledger build
-pre_req_ubuntu() {
-  echo -e "\nInstalling Ubuntu pre-req packages\n"
-  apt-get -y install git gcc g++ make libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools
+# Install prerequisite packages for an Unbuntu Hyperledger build
+prereq_ubuntu() {
+  echo -e "\nInstalling Ubuntu prerequisite packages\n"
+  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to install pre-requisite packages.\n"
+    exit 1
+  fi
 }
 
 # Determine flavor of Linux OS
@@ -114,6 +128,7 @@ build_golang() {
   cd $HOME
   mkdir -p $HOME/go
 
+  if [ $1 == 'rhel' ] || [ $1 == 'sles' ]; then
   cat > copygo.sh <<EOF
 cp -ra /usr/local/go /tmp/golang
 cp -ra /usr/local/go /tmp/work
@@ -121,9 +136,12 @@ EOF
 
   # Extract the Golang v1.6 compiler directory from the brunswickheads docker image
   docker run --rm -v $HOME:/tmp/work -v /usr/local:/tmp/golang brunswickheads/openchain-peer bash /tmp/work/copygo.sh
-
-  export PATH=/usr/local/go/bin:$PATH
   export GOROOT=/usr/local/go
+else
+  # Install Golang when running Ubuntu
+  apt-get -y install golang-1.6-go
+  export GOROOT=/usr/lib/go-1.6
+fi
   echo -e "*** DONE ***\n"
 }
 
@@ -138,8 +156,8 @@ build_rocksdb() {
 
   git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git
   cd  rocksdb
-  sed -i -e "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-  sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
+  sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
+  sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
   make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to build the RocksDB shared library.\n"
@@ -251,12 +269,11 @@ ENV GOROOT=/usr/local/go
 # Install RocksDB
 RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
 WORKDIR /tmp/rocksdb
-RUN sed -i -e "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
+RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
+RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
 RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-# Copy GOPATH src and install Peer
 ENV GOPATH=/opt/gopath
-ENV PATH=\$GOPATH/bin:/usr/local/go/bin:\$PATH
+ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
 EOF
 
   # Build hyperledger/fabric-baseimage
@@ -337,12 +354,42 @@ ENV GOROOT=/usr/local/go
 # Install RocksDB
 RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
 WORKDIR /tmp/rocksdb
-RUN sed -i -e "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
+RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
+RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
 RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-# Copy GOPATH src and install Peer
 ENV GOPATH=/opt/gopath
-ENV PATH=\$GOPATH/bin:/usr/local/go/bin:\$PATH
+ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
+EOF
+
+  # Build hyperledger/fabric-baseimage
+  docker build -t hyperledger/fabric-baseimage -f $HOME/Dockerfile $HOME
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to build the Docker image: hyperledger/fabric-baseimage.\n"
+    exit 1
+  fi
+}
+
+docker_base_image_ubuntu() {
+  cd $HOME
+  debootstrap xenial ubuntu-base > /dev/null
+  cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
+  tar -C ubuntu-base -c . | docker import - ubuntu-base
+
+  # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
+  cd $HOME
+  cat > Dockerfile <<EOF
+FROM ubuntu-base:latest
+RUN apt-get update
+RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
+ENV GOROOT=/usr/lib/go-1.6
+# Install RocksDB
+RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+WORKDIR /tmp/rocksdb
+RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
+RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
+RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+ENV GOPATH=/opt/gopath
+ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
 EOF
 
   # Build hyperledger/fabric-baseimage
@@ -432,7 +479,7 @@ build_hyperledger_core() {
   export GOPATH=$HOME
   export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
   export CGO_CFLAGS=" "
-  export PATH=/usr/local/go/bin:$PATH
+  export PATH=$GOROOT/bin:$PATH
 
   # Download latest Hyperledger Fabric codebase
   if [ ! -d $HOME/src/github.com/hyperledger ]; then
@@ -446,29 +493,15 @@ build_hyperledger_core() {
   # Build the Hyperledger Fabric core components
   if [ $USE_DOCKER_HUB -eq 0 ] || [ $OS_FLAVOR == "sles" ]; then
     docker_base_image_$1
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build
-
-    # Update the Makefile to allow the use of "make unit-test" and "make behave"
-    # for installations that created their own Docker base images.
-    sed -i -e "s/\.peerimage-dummy: \.baseimage-dummy/\.peerimage-dummy:/" $GOPATH/src/github.com/hyperledger/fabric/Makefile
-    sed -i -e "s/\.caimage-dummy: \.baseimage-dummy/\.caimage-dummy:/" $GOPATH/src/github.com/hyperledger/fabric/Makefile
-    sed -i -e "s/base-image: \.baseimage-dummy/base-image:/" $GOPATH/src/github.com/hyperledger/fabric/Makefile
-  else
-    cd $GOPATH/src/github.com/hyperledger/fabric
-    make clean peer
+    # Update the Makefile to allow make to run for
+    # installations that created their own Docker base images.
+    sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
   fi
+  cd $GOPATH/src/github.com/hyperledger/fabric
+  make peer membersrvc peer-image membersrvc-image
 
   if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Hyperledger peer component.\n"
-    exit 1
-  fi
-
-  cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-  go build -o membersrvc server.go
-
-  if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Hyperledger membership services component.\n"
+    echo -e "\nERROR: Unable to build the Hyperledger Fabric components.\n"
     exit 1
   fi
 
@@ -501,47 +534,45 @@ setup_behave() {
 # Update profile with environment variables required for Hyperledger Fabric use
 # Also, clean up work directories and files
 post_build() {
-  # Update .bash_profile / .profile
-  case $1 in
-    rhel|sles)
-      ENV_FILE=".bash_profile"
-      ;;
-    ubuntu)
-      ENV_FILE=".profile"
-  esac
+  echo -e "\n*** post_build ***\n"
 
-  grep -q 'GOPATH' <<< `cat /root/.bash_profile`
-  if [ $? != 0 ]; then
-  cat >> ~/$ENV_FILE <<EOF
-export PATH=/usr/local/go/bin:$PATH
-export GOROOT=/usr/local/go
-export GOPATH=$HOME
+cat <<EOF >/etc/profile.d/goroot.sh
+export GOROOT=$GOROOT
+export GOPATH=$GOPATH
+export PATH=\$PATH:$GOROOT/bin:$GOPATH/bin
 EOF
-  fi
 
   # Cleanup files and Docker images and containers
   rm -f $HOME/copygo.sh
   rm -f $HOME/get-pip.py
 
-  if [ ! -z $(docker ps -aq) ]; then
+  # Delete any temporary Docker containers created during the build process
+  if [[ ! -z $(docker ps -aq) ]]; then
       docker rm -f $(docker ps -aq)
   fi
-  docker rmi brunswickheads/openchain-peer
+
+  # Delete the temporary Docker image created during the build process
+  docker images | grep "brunswick"
+  if [ $?  == 0 ]; then
+      docker rmi brunswickheads/openchain-peer
+  fi
+
+  echo -e "*** DONE ***\n"
 }
 
 ################
 # Main Routine #
 ################
 
+# Check for help flags
+if [ $# == 1 ] && ([[ $1 == "-h"  ||  $1 == "--help" || $1 == "-?" || $1 == "?" || -z $(grep "-" <<< $1) ]]); then
+  usage
+fi
+
 # Ensure that the user running this script is root.
 if [ xroot != x$(whoami) ]; then
   echo -e "\nERROR: You must be root to run this script.\n"
   exit 1
-fi
-
-# Check for help flags
-if [ $# == 1 ] && ([[ $1 == "-h"  ||  $1 == "--help" || $1 == "-?" || $1 == "?" || -z $(grep "-" <<< $1) ]]); then
-  usage
 fi
 
 # Process script arguments
@@ -563,15 +594,15 @@ while getopts ":bc" opt; do
  esac
 done
 
-# Start build process
+# Determine s390x environment
 get_linux_flavor      # Determine Linux distribution
 get_machine_type      # Determine IBM z Systems machine type
 
 # Main build routines
 if [ $BUILD_HYPERLEDGER_CORE_ONLY -eq 1 ]; then
-  if [ -f /usr/bin/docker ] && [ -f /usr/lib/librocksdb.so.${ROCKSDB_VERSION} ] && [ -f /usr/local/go/bin/go ]; then
+  if [ -f /usr/bin/docker ] && [ -f /usr/lib/librocksdb.so.${ROCKSDB_VERSION} ] && [[ -f /usr/local/go/bin/go || -f /usr/lib/go-1.6/bin/go ]]; then
     # Install pre-reqs for detected Linux OS Distribution
-    pre_req_$OS_FLAVOR
+    prereq_$OS_FLAVOR
     if [ $? != 0 ]; then
       echo -e "\nERROR: Unable to install pre-requisite packages.\n"
       exit 1
@@ -585,11 +616,7 @@ if [ $BUILD_HYPERLEDGER_CORE_ONLY -eq 1 ]; then
 fi
 
 # Install pre-reqs for detected Linux OS Distribution
-pre_req_$OS_FLAVOR
-if [ $? != 0 ]; then
-  echo -e "\nERROR: Unable to install pre-requisite packages.\n"
-  exit 1
-fi
+prereq_$OS_FLAVOR
 
 # Default action is to build all components for the Hyperledger Fabric environment
 build_docker $OS_FLAVOR
@@ -597,7 +624,7 @@ build_golang $OS_FLAVOR
 build_rocksdb
 build_hyperledger_core $OS_FLAVOR
 setup_behave
-post_build $OS_FLAVOR
+post_build
 
 echo -e "\n\nThe Hyperledger Fabric and its supporting components have been successfully installed.\n"
 exit 0

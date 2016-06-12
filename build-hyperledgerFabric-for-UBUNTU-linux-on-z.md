@@ -6,7 +6,7 @@ technology, Hyperledger Fabric, on the Linux on z Systems platform.
 
 More importantly, you will create the Docker artifacts using the base
 Ubuntu system on which you will deploy. The base Docker image will be
-Ubuntu based and have access to the same yum repositories as the
+Ubuntu based and have access to the same repositories as the
 system on which you deploy. This eliminates the need to download any
 pre-built Docker images from the public Docker repository, eliminating
 one potential security exposure. The Docker images you create will be
@@ -36,10 +36,10 @@ For more information about the Hyperledger Fabric project, see
 > ***NOTE:***   
 > The instructions contained in this document assume that you
 > are using a non-root user with sudo authority and that the non-root
-> user has been added to the **wheel** group. In addition, update the
-> **/etc/sudoers** file to enable the **wheel** group with no password
+> user has been added to the **sudo** group. In addition, update the
+> **/etc/sudoers** file to enable the **sudo** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
-> will contain the **go** executable to the **secure_path** variable.
+> will contain the **go** executable ( **/usr/lib/go-1.6/bin** ) to the **secure_path** variable.
 
 Installing Golang
 =================
@@ -50,7 +50,40 @@ source code.
 
 Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 
-    sudo apt-get install golang-1.6-go
+```
+    sudo apt-get -y install golang-1.6-go
+    export PATH=$PATH:/usr/lib/go-1.6/bin
+```
+
+> ***NOTE:*** Also append **/usr/lib/go-1.6/bin** to the PATH environment variable
+in your **.profile** file if you run the Hyperledger Fabric peer natively.
+
+Build and Install RocksDB
+=========================
+RocksDB is an embeddable persistent key-value store for fast storage and
+is used by the Hyperledger Fabric peer, membership and security service
+components.
+
+1.  RocksDB is written using the C++ programming language. Make sure
+that the C++ compiler is installed along with the following compression packages:
+
+```
+sudo apt-get -y install g++ libsnappy-dev zlib1g-dev libbz2-dev
+```
+
+2.  Download and build RocksDB:
+
+```
+cd $HOME
+mkdir git && cd git
+git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
+cd rocksdb
+sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
+sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
+make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
+```
+>***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**,
+if your Linux system is not running on a z Systems EC12.
 
 Docker Daemon & Docker Registry
 ===============================
@@ -62,7 +95,7 @@ tests include tests that build both a peer service Docker image and a
 membership and security service Docker image. This is covered later in
 the document.
 
-A Docker registry is required for the Hyperledger Fabric environment if you
+A local Docker registry can be used for the Hyperledger Fabric environment if you
 are not going to access public Docker images.
 The reason to create your own registry is twofold. First, it is your
 private registry. Second, it allows for the use of the same unaltered
@@ -83,7 +116,7 @@ Installing the Docker Packages
     >needs to be added to the  docker group:  
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
-    > The \<non-root-user\> will have to logout and then login to pick up the change.
+    > The \<non-root-user\> may have to logout and then login to pick up the change.
 
 Update Docker Configuration files  
 ---------------------------------
@@ -113,91 +146,6 @@ Update Docker Configuration files
     ```
     sudo systemctl start docker-registry.service
     ```
-
-Build and Install RocksDB
-=========================
-RocksDB is an embeddable persistent key-value store for fast storage and
-is used by the Hyperledger Fabric peer, membership and security service
-components.
-
-1.  RocksDB is written using the C++ programming language. Make sure
-    that the C++ compiler is installed along with the following compression packages:
-
-    ```
-    sudo apt-get -y install g++ libsnappy-dev zlib1g-dev libbz2-dev
-    ```
-2.  Download and build RocksDB:
-
-    ```
-    cd $HOME
-    mkdir git && cd git
-    git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
-    cd rocksdb
-    sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-    sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
-    make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
-    ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
-
-Build the Hyperledger Fabric Core
-=================================
-The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
-
-1.  Download the Hyperledger Fabric code into a working directory:
-
-    ```
-    cd $HOME
-    mkdir -p fabricwork/github.com/hyperledger
-    cd fabricwork/github.com/hyperledger
-    git clone https://github.com/hyperledger/fabric.git
-    ```
-
-2.  Setup environment variables for compiling and linking:
-
-    ```
-    export GOPATH=$HOME/fabricwork
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
-    ```
-    > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
-    > if you run the Hyperledger Fabric peer natively.
-
-3.  Build the Hyperledger Fabric executable binaries. The peer binary
-    runs validating peer nodes and the membersrvc
-    binary is the membership and security server that handles enrollment
-    and certificate requests:
-
-    ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build -v
-    cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -v -o membersrvc server.go
-    ```
-
-***Optional:*** If you are planning to run the Fabric executibles locally and
-not inside docker containainers, you can create shell scripts to start the
-peer and the membership and security services executables in the background
-and re-direct logging output to a file.
-
-1.  Create a file called **fabric-peer.sh** located in
-    **/usr/local/bin** with the executable attribute set:
-
-    ```bash
-    #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/peer
-    ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
-    ```
-    > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
-
-2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
-    with the executable attribute set:
-
-    ```bash
-    #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/membersrvc
-    ./membersrvc > /var/log/membersrvc.log 2>&1 &
-    ```
-    > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
 
 Build a Docker Image for Hyperledger Fabric Use
 ===============================================
@@ -229,30 +177,33 @@ Build a Base Ubuntu Docker Image
     above for installing, configuring and starting the Docker Daemon and Docker Registry.
 
 2.  Install the **debootstrap** utility:
+
     ```
     sudo apt-get -y install debootstrap
     ```
 
 3.  Execute the **debootsrap** utility to create a base Ubuntu image directory:
+
     ```
     cd $HOME
     sudo debootstrap xenial ubuntu-base > /dev/null
     ```
 
-4.  Alter the ubuntu-base/etc/apt/sources.list file to include the universe repository:
+4.  Update the sources.list file for repository access:
+
     ```
-    sudo vim ubuntu-base/etc/apt/sources.list
-    # Append universe to the following source
-    deb http://ports.ubuntu.com/ubuntu-ports xenial main universe
+    cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
     ```
 
 5.  Import the base ubuntu image into docker:
+
     ```
     cd $HOME
     sudo tar -C ubuntu-base -c . | docker import - ubuntu-base
     ```
 
 6.  Ensure that the image has been imported:
+
     ```
     docker images
     ```
@@ -290,55 +241,96 @@ to build a Golang and RocksDB Docker image:
     FROM ubuntu-base:latest
     RUN apt-get update
     RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
-    RUN ln -s /usr/lib/go-1.6/bin/go /usr/bin/go
+    ENV GOROOT=/usr/lib/go-1.6
     COPY rocksdb /tmp/rocksdb
     WORKDIR /tmp/rocksdb
     RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+    ENV PATH=$PATH:$GOROOT/bin
     ENV GOPATH=/opt/gopath
     WORKDIR $GOPATH
     ```
 
 5.  Issue the **docker build** command:
     ```
-    docker build -t <docker_registry_host_ip>:5050/s390x/golang_rocksdb -f Dockerfile .
+    docker build -t hyperledger/fabric-baseimage -f Dockerfile .
     ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.
 
 6.  Confirm that your new image was created by issuing the **docker images** command.
 
-7.  **Optional:** Push your new Golang toolchain Docker image to your Docker Registry:
+7.  **Optional:** Push your new Golang toolchain and RocksDB Docker image
+    to your Docker Registry:
     ```
-    docker push <docker_registry_host_ip>:5050/s390x/golang_rocksdb
+    docker tag hyperledger/fabric-baseimage:latest <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
+    docker push <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  Update your Hyperledger Fabric peer’s configuration file and save.
-    The following changes inform the peer to use your Golang toolchain
-    Docker image when executing Chaincode transactions both locally and
-    inside Docker containers that are running the Hyperledger code:
+Build the Hyperledger Fabric Core
+=================================
+The Hyperledger Fabric Core contains code for running validating peers and membership
+services for enrollment and certificate authority tasks.
+
+1.  Download the Hyperledger Fabric code into a working directory:
 
     ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    vim core.yaml
+    cd $HOME
+    mkdir -p fabricwork/github.com/hyperledger
+    cd fabricwork/github.com/hyperledger
+    git clone https://github.com/hyperledger/fabric.git
     ```
 
-    a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
+2.  Setup environment variables for compiling and linking:
 
     ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-      COPY src $GOPATH/src
-      WORKDIR $GOPATH
+    export GOPATH=$HOME/fabricwork
+    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
+    export CGO_CFLAGS=" "
+    ```
+    > ***NOTE:*** Also add the the GOPATH environment variable to your **.profile** file
+    > if you run the Hyperledger Fabric peer natively.
+
+3.  Build the Hyperledger Fabric executable binaries. The peer binary
+    runs validating peer nodes and the membersrvc binary is the membership
+    and security server that handles enrollment and certificate requests.
+    In addition to the peer and membersrvc executables, supporting Docker images
+    are created for development use. The **Makefile** is altered to allow for the
+    use of your own hyperledger/fabric-baseimage:
+
+    ```
+    sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
+    cd $GOPATH/src/github.com/hyperledger/fabric
+    make peer membersrvc
     ```
 
-    b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+    >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build directory**
 
+***Optional:*** If you are planning to run the Fabric executables locally and
+not inside docker containainers, you can create shell scripts to start the
+peer and the membership and security services executables in the background
+and re-direct logging output to a file.
+
+1.  Create a file called **fabric-peer.sh** located in
+    **/usr/local/bin** with the executable attribute set:
+
+    ```bash
+    #!/bin/bash
+    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin/peer
+    ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
     ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
+    > **NOTE:** Change **\<parent-directory\>** to the root directory of where
+    the Hyperledger Fabric code is located.
+
+2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
+    with the executable attribute set:
+
+    ```bash
+    #!/bin/bash
+    cd <parent-directory>/src/github.com/hyperledger/fabric/build/bin/membersrvc
+    ./membersrvc > /var/log/membersrvc.log 2>&1 &
     ```
+    > **NOTE:** Change **\<parent-directory\>** to the root directory of where
+    the Hyperledger Fabric code is located.
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
@@ -349,120 +341,22 @@ server on your Linux system.
 
 However, if you would like to run your peer(s) or membership services
 components in their own Docker containers, perform the following steps
-to build their respective Docker images.
+to build their respective Docker images:
 
-1.  Update the Hyperledger Fabric’s core.yaml file:
     ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    vim core.yaml
-    ```
-
-2. Replace the **peer.Dockerfile** parameter in the following section (around line 100):
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-      # Copy GOPATH src and install Peer
-      COPY src $GOPATH/src
-      RUN mkdir -p /var/hyperledger/db
-      WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
-    ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.  
-
-3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
-    ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/core/container
-    go test -timeout=20m -run BuildImage_Peer
-    go test -timeout=20m -run BuildImage_Obcca
-    ```
-    > ***NOTE:*** Both of the images are also built when running the Unit Tests.
-
-4.  Verify that the **hyperledger-peer** and **membersrvc** images are
-    displayed after issuing a **docker images** command:
-    ```
-    docker images
+    cd $GOPATH/src/github.com/hyperledger/fabric
+    make peer-image membersrvc-image
     ```
 
 Unit Tests
 ==========
-If you feel inclined to run the Hyperledger Fabric unit tests, there are
-a few minor changes that need to be made to some Golang test files prior
-to invoking the unit tests.
+If you feel inclined to run the Hyperledger Fabric unit tests, follow
+the steps below:
 
-Test File Changes
------------------
-1.  Edit
-    *$GOPATH/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
-    and replace the **peer.Dockerfile** parameter with the following:
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-      # Copy GOPATH src and install Peer
-      COPY src $GOPATH/src
-      RUN mkdir -p /var/hyperledger/db
-      WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
-    ```
-
-2.  Edit
-    *$GOPATH/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
-    and replace the **chaincode.golang.Dockerfile** parameter with the
-    following:
-
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-      COPY src $GOPATH/src
-      WORKDIR $GOPATH
-    ```
-
-3.  Perform steps 1 and 2 for file:  
-    *$GOPATH/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
-
-4.  Edit *$GOPATH/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
-    a) Perform steps 1 and 2 for the chaincodetest.yaml file.
-    b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang_rocksdb
-    ```
-
-5.  Edit
-    *$GOPATH/src/github.com/hyperledger/fabric/core/container/controller_test.go*
-    and replace **busybox** with **s390x/busybox**.
-
-> ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
-> that is running your Docker Registry.
-
-Running the Unit Tests
-----------------------
-1.  Bring up a window (via ssh or screen) of the system where you built
-    the Hyperledger Fabric components and start the Fabric Peer:
-    ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    sudo ./peer node start
-    ```
-
-2.  From another window of the same Linux system, create an executable
-    script called **unit-tests.sh** in **$HOME** using the
-    following lines:
-    ```bash
-    #!/bin/bash
-    export GOPATH=<parent-directory>
-    go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
-    ```
-    > ***NOTE:*** If you have root access and would like to run the unit
-    > tests, simply set the environment variables listed above and then
-    > issue the go test command.  
-    > Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.   
-
-3.  Invoke the unit-tests.sh script:
-
-    ```
-    cd $HOME
-    sudo ./unit-tests.sh
-    ```
+```
+cd $GOPATH/src/github.com/hyperledger/fabric
+make unit-test
+```
 
 Behave Tests
 ============
@@ -494,6 +388,6 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 4. Run the Behave tests:
 
     ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/bddtests
-    behave
+    cd $GOPATH/src/github.com/hyperledger/fabric
+    make behave
     ```
