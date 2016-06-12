@@ -189,7 +189,7 @@ Build a Base Ubuntu Docker Image
     sudo debootstrap xenial ubuntu-base > /dev/null
     ```
 
-4.  Update the sources.list file for repository access:
+4.  Update the **sources.list** file for repository access:
 
     ```
     sudo cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
