@@ -260,7 +260,7 @@ if you are not going to access public Docker images.
 
 1.  Install the dependencies:
     ```
-    sudo zypper in --non-interactive git-core make
+    sudo zypper --non-interactive in git-core make
     ```
     > ***NOTE:*** Golang is required to build the Docker Registry. See [Building Golang](#building-golang)
     > to build the Golang toolchain. You may have already
