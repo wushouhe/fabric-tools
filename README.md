@@ -30,6 +30,10 @@ distribution (currently RHEL, SLES, and Ubuntu) as well as the z Systems machine
 type, and build out the necessary components.  After running this script, logout and
 then login to pick up updates to Hyperledger Fabric specific environment variables.
 
+To run the script:
+sudo su -  (if you currently are not root)
+<path-of-script>/zSystemsFabricBuild.sh options
+
 NOTE: Prerequisite packages are required to build and use RocksDB which may not
 reside in your default package management repositories.  There is the possibility
 that extra steps might be needed to add the additional repositories to your system.
