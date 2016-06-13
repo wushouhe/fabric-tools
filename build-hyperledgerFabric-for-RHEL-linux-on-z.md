@@ -630,6 +630,6 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 4. Run the Behave tests:
 
     ```
-    cd $HOME/fabricwork/src/github.com/hyperledger/fabric/bddtests
-    behave
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric
+    make behave
     ```
