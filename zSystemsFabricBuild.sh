@@ -23,7 +23,7 @@ then login to pick up updates to Hyperledger Fabric specific environment variabl
 
 To run the script:
 sudo su -
-<path-of-script>/zSystemsFabricBuild.sh
+<path-of-script>/zSystemsFabricBuild.sh options
 
 NOTE: Prerequisite packages are required to build and use RocksDB which may not
 reside in your default package management repositories.  There is the possibility
