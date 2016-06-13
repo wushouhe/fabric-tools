@@ -21,6 +21,10 @@ distribution (currently RHEL, SLES, and Ubuntu) as well as the z Systems machine
 type, and build out the necessary components.  After running this script, logout and
 then login to pick up updates to Hyperledger Fabric specific environment variables.
 
+To run the script:
+sudo su -
+<path-of-script>/zSystemsFabricBuild.sh
+
 NOTE: Prerequisite packages are required to build and use RocksDB which may not
 reside in your default package management repositories.  There is the possibility
 that extra steps might be needed to add the additional repositories to your system.
@@ -98,19 +102,19 @@ get_machine_type() {
       MACHINE_TYPE="z196"
       ;;
       2818)
-      MACHINE_TYPE="z114"
+      MACHINE_TYPE="z196"
       ;;
       2827)
       MACHINE_TYPE="zEC12"
       ;;
       2828)
-      MACHINE_TYPE="zBC12"
+      MACHINE_TYPE="zEC12"
       ;;
       2964)
-      MACHINE_TYPE="z13"
+      MACHINE_TYPE="zEC12"
       ;;
       2965)
-      MACHINE_TYPE="z13s"
+      MACHINE_TYPE="zEC12"
       ;;
       *)
       echo -e "\nERROR: Unknown machine architecture.\n"
