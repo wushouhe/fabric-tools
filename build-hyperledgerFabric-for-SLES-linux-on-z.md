@@ -229,6 +229,8 @@ Installing the Docker Client / Daemon
 7.  Start the Docker service and cleanup work directory:
 
     ```
+    sudo groupadd docker
+    sudo usermod -aG docker <non-root-user>
     sudo systemctl daemon-reload
     sudo systemctl start docker.service
     rm -rf $HOME/docker-1.10.1-rhel7.2-20160408*
@@ -239,7 +241,7 @@ Installing the Docker Client / Daemon
     > needs to be created and the non-root user needs to be added to the
     > docker group:  
     > **sudo groupadd docker**  
-    > **sudo usermod -a -G docker \<non-root-user\>**  
+    > **sudo usermod -aG docker \<non-root-user\>**  
     >
     > The \<non-root-user\> may have to logout and then login to pick up the change.
     > If you didn't update your **.bash_profile** file when installing Golang,
@@ -258,7 +260,7 @@ if you are not going to access public Docker images.
 
 1.  Install the dependencies:
     ```
-    sudo zypper in git-core make
+    sudo zypper in --non-interactive git-core make
     ```
     > ***NOTE:*** Golang is required to build the Docker Registry. See [Building Golang](#building-golang)
     > to build the Golang toolchain. You may have already
