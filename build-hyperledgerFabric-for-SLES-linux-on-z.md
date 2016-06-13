@@ -21,13 +21,14 @@ The major components include:
   - Peer
   - Membership and Security Services
 
-Once all of the major components are built, custom Docker images are
-created for the Golang programming language, Hyperledger Fabric Peer,
+Once all of the major components are in place on the bulid system, custom Docker
+images are created for the Golang programming language, Hyperledger Fabric Peer,
 and Hyperledger Fabric Membership and Security Services. This allows for
 a fully *dockerized* development or proof-of-concept Hyperledger Fabric
 environment.
 
-The procedures in this guide are tailored for SUSE Linux Enterprise Server (SLES) 12 SP1. Due to the ongoing development activity within the
+The procedures in this guide are tailored for SUSE Linux Enterprise Server
+(SLES) 12 SP1. Due to the ongoing development activity within the
 Hyperledger project, there is a chance that portions of this document
 may become obsolete or out of date.
 
@@ -40,10 +41,8 @@ For more information about the Hyperledger Fabric project, see
 > user has been added to the **wheel** group. In addition, update the
 > **/etc/sudoers** file to enable the **wheel** group with no password
 > access, and append **/usr/local/bin** and the targeted directory that
-> will contain the **go** executable to the **secure_path** variable.
-> The targeted directory is set in step 4 of [Building the Golang
-> Toolchain](#building-the-golang-toolchain). Otherwise, if you have root access…
-> Great! No need to worry about this.
+> will contain the **go** executable, **/usr/local/go/bin**, to the
+> **secure_path** variable.
 
 Building Golang
 ===============
@@ -68,7 +67,10 @@ Cross-Compiling the Bootstrap Tool
 ----------------------------------
 To build the Golang bootstrap tool you will need to use an
 x86-based machine running an up-to-date version of Linux, e.g.,
-RHEL 7.x.  The bootstrap tool can also be created on an x86-based machine running an up-to-date version of SLES.  Simply replace the yum command with the equivalent zypper command.
+SLES 7.x.
+
+> ***NOTE:*** If you do not have access to an x86-based Linux system, you can
+> download the Golang Bootstrap tool from <https://drive.google.com/open?id=0B_zkrFk74VRuWGhPOURPaHUyYnc>.
 
 1.  Install the dependencies:
 
@@ -137,13 +139,13 @@ your Linux on z Systems instance and perform the steps below.
     ```
 
 4. Copy the Golang directory to the final install directory,
-**\<golang_home\>**, and permanently update your **PATH**
+**/usr/local**, and permanently update your **PATH**
 environment variable to use the new toolchain.  The **go** directory is typically located under **/usr/local**.
 
     ```
-    sudo cp -ra $HOME/go /<golang_home>/
+    sudo cp -ra $HOME/go /usr/local
     # Also add the following lines to ~/.bash_profile
-    export PATH=/<golang_home>/go/bin:$PATH
+    export PATH=/usr/local/go/bin:$PATH
     ```
 
 5. Cleanup and delete bootstrap files:
@@ -158,55 +160,80 @@ Docker
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
-can both run in Docker containers. The Hyperledger Fabric peer unit
-tests include tests that build both a peer service Docker image and a
-membership and security service Docker image. This is covered later in
-the document.
-
-A Docker registry is required for the Hyperledger Fabric environment and
-the process to build your own Docker registry from source is described
-below.
+can both run in Docker containers. Instructions for building both a peer
+service Docker image and a membership and security service Docker image
+are covered later in this document.
 
 Installing the Docker Client / Daemon
 -------------------------------------
-Docker is packaged with SLES 12 SP1.  Perform the following steps to install and configure Docker:
 
-1.  Ensure that the apparmor package is up to date:
+1.  Install prerequisite package for Docker:
 
     ```
     sudo zypper install patterns-sles-apparmor
     ```
 
-2.  Install the Docker package:
+2.  Download the Docker binary tarball and untar the file:
 
     ```
-    sudo zypper in docker
+    cd $HOME
+    wget ftp://ftp.unicamp.br/pub/linuxpatch/s390x/suse/sles12/docker/docker-1.9.1-sles12-20151127.tar.gz
+    tar -xf docker-1.9.1-sles12-20151127.tar.gz
     ```
-    >***NOTE:*** If your SLES system does not have a docker package in its repositories or is less than version 1.9, refer to [Linux on z Systems Docker installation
-    instructions](https://www.ibm.com/developerworks/linux/linux390/docker.html)
-    for downloading and installing the SLES distribution of Docker on Linux
-    on z Systems.
 
-3. Create a shell script in **/usr/local/bin** to start the Docker
-Daemon and redirect all output to a logging file. Ensure that the
-shell script has the executable attribute set.
+3.  Copy the Docker binary file to a directory that is contained within the
+    current **PATH** environment variable:
 
     ```
-    #!/bin/bash
-    /usr/local/bin/docker daemon -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050 > /var/log/docker.log 2>&1 &
+    sudo cp docker-1.9.1-sles12-20151127/docker /usr/bin
     ```
-    > ***NOTE:*** If your Docker Registry is running on another system, change
-    > **localhost** to either the hostname or IP address of the system
-    > running the Docker Registry. Also note that the port number of the
-    > insecure registry matches the port number that the Docker Registry is
-    > listening on.
 
-4. Start the Docker Daemon shell script:
+4.  Create a Docker configuration file:
 
     ```
-    sudo touch /var/run/docker.sock
-    sudo <docker-daemon-script-name>
+    sudo mkdir -p /etc/docker
+    sudo touch /etc/docker/docker.conf
+    sudo chmod 664 /etc/docker/docker.conf
     ```
+5.  Edit the Docker configuration file created in the previous step and add the following line and save:
+
+    ```
+    DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry localhost:5050"
+    ```
+
+6.  Create a Service for Docker:
+
+    a) Setup initial service file:
+
+    ```
+    sudo touch /etc/systemd/system/docker.service
+    sudo chmod 664 /etc/systemd/system/docker.service
+    ```
+
+    b) Copy and paste the following contents into **/etc/systemd/system/docker.service** :
+
+    ```
+    [Unit]
+    Description=Docker Application Container Engine
+    Documentation=https://docs.docker.com
+
+    [Service]
+    Type=notify
+    ExecStart=/usr/bin/docker daemon $DOCKER_OPTS
+    EnvironmentFile=-/etc/docker/docker.conf
+
+    [Install]
+    WantedBy=default.target
+    ```
+
+7.  Start the Docker service and cleanup work directory:
+
+    ```
+    sudo systemctl daemon-reload
+    sudo systemctl start docker.service
+    rm -rf $HOME/docker-1.10.1-rhel7.2-20160408*
+    ```
+
     > ***NOTE:*** In order to issue Docker commands from a
     > non-root user without prefixing the command with sudo, a docker group
     > needs to be created and the non-root user needs to be added to the
@@ -214,7 +241,10 @@ shell script has the executable attribute set.
     > **sudo groupadd docker**  
     > **sudo usermod -a -G docker \<non-root-user\>**  
     >
-    > The \<non-root-user\> will have to logout and then login to pick up the change.
+    > The \<non-root-user\> may have to logout and then login to pick up the change.
+    > If you didn't update your **.bash_profile** file when installing Golang,
+    > you'll have to update your PATH environment variable:  
+    > **export PATH=$PATH:/usr/local/go/bin**
 
 Building the Docker Registry
 ----------------------------
@@ -223,11 +253,8 @@ Docker images is part of the GitHub Docker Distribution project. The
 Docker Distribution project consists of a toolset to pack, ship, store,
 and deliver Docker content.
 
-The reason to create your own registry is twofold. First, it is your
-private registry. Second, you will create a registry for Linux on z
-Systems Docker daemons, which will allow the use of the same unaltered
-Dockerfile contents used by the Docker daemon on the x86 platform. This
-eliminates source code changes to the Hyperledger fabric code.
+A local Docker registry can be used for the Hyperledger Fabric environment
+if you are not going to access public Docker images.
 
 1.  Install the dependencies:
     ```
@@ -241,91 +268,76 @@ eliminates source code changes to the Hyperledger fabric code.
 2.  Create a distribution directory and clone the source code:
 
     ```
-    mkdir -p $HOME/src/github.com/docker
-    cd $HOME/src/github.com/docker
+    mkdir -p $HOME/git/src/github.com/docker
+    cd $HOME/git/src/github.com/docker
     git clone https://github.com/docker/distribution.git
-    cd $HOME/src/github.com/docker/distribution
+    cd $HOME/git/src/github.com/docker/distribution
     git checkout v2.3.0
     ```
 3.  Set **GOPATH** and **DISTRIBUTION_DIR** environment variables:
 
     ```
-    export DISTRIBUTION_DIR=$HOME/src/github.com/docker/distribution
-    export GOPATH=$HOME
+    export DISTRIBUTION_DIR=$HOME/git/src/github.com/docker/distribution
+    export GOPATH=$HOME/git
     export GOPATH=$DISTRIBUTION_DIR/Godeps/_workspace:$GOPATH
     ```
 4. Build the distribution binaries:
 
     ```
-    cd $HOME/src/github.com/docker/distribution
+    cd $HOME/git/src/github.com/docker/distribution
     make PREFIX=$HOME clean binaries
+    sudo cp $HOME/bin/registry /usr/bin
     ```
 5.  Run the Test Suite:
 
     ```
     make PREFIX=$HOME test
     ```
-6.  Start the Docker Registry:
 
-    > ***NOTE:*** The Docker Registry fetches the configuration from
-    > **$DISTRIBUTION_DIR/ cmd/registry/config.yml**. The default
-    > filesystem location where the Docker Registry stores images is
-    > **/var/lib/registry.**
-
-    a) Copy the **config-dev.yml** file to **config.yml**:
-
-      ```
-      cp $DISTRIBUTION_DIR/cmd/registry/config-dev.yml $DISTRIBUTION_DIR/cmd/registry/config.yml
-      ```
-    b)  Tailor the Docker Registry configuration file and save:
-
-    - Change the default storage caching mechanism. If you are not
-      using redis for storage caching, edit
-      **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-      **storage.cache.blobdescriptor** parameter from **redis** to
-      **inmemory**.
-
-    - Change the default listening port of the Docker Registry. Edit
-     **$DISTRIBUTION_DIR/cmd/registry/config.yml** and change the
-     **http.addr** parameter from **5000** to **5050**. This change
-     is required because port 5000 conflicts with the Hyperledger
-     Fabric peer’s REST service port, which uses port 5000.
-
-    c) Create the default directory to store images, if it does not exist:
-
-      ```
-      sudo mkdir -p /var/lib/registry
-      ```
-    d) Start the Docker Registry:
+6.  Tailor the Docker Registry configuration file:
 
     ```
-    $HOME/bin/registry $DISTRIBUTION_DIR/cmd/registry/config.yml
+    sudo cp $DISTRIBUTION_DIR/cmd/registry/config-dev.yml /etc/docker/registry-config.yml
+    sudo sed -i "s/redis/inmemory/" /etc/docker/registry-config.yml
+    sudo sed -i "s/5000/5050/" /etc/docker/registry-config.yml
     ```
 
-For a more permanent solution when starting the Docker Registry:
-
-1.  Setup homes for the Docker Registry executable binary and its
-    configuration file:
+7.  Create the default directory to store images, if it does not exist:
 
     ```
-    sudo mkdir /etc/docker-registry
-    sudo cp $DISTRIBUTION_DIR/cmd/registry/config.yml /etc/docker-registry
-    sudo cp $HOME/bin/registry /usr/local/bin
+    sudo mkdir -p /var/lib/registry
     ```
 
-2.  Create a shell script in **/usr/local/bin** to start the Docker
-    Registry in the background and redirect all output to a
-    logging file. Ensure that the shell script has the executable
-    attribute set.
+8. Create a Service for the Docker Registry
 
-    ```bash
-    #!/bin/bash
-    /usr/local/bin/registry /etc/docker-registry/config.yml > /var/log/docker-registry.log 2>&1 &
-    ```
-3.  Start the Docker Registry:
+    a) Setup initial service file:
 
     ```
-    sudo <docker-registry-script-name>
+    sudo touch /etc/systemd/system/docker-registry.service
+    sudo chmod 664 /etc/systemd/system/docker-registry.service
+    ```
+
+    b) Copy and paste the following contents into **/etc/systemd/system/docker-registry.service** :
+
+    ```
+    [Unit]
+    Description=Docker Application Container Engine
+    Documentation=https://github.com/docker/distribution
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/registry /etc/docker/registry-config.yml
+
+    [Install]
+    WantedBy=default.target
+    ```
+    >***NOTE:*** Be sure that all lines begin in column 1 when you paste in the above contents.
+
+9.  Start the Docker Registry service:
+
+    ```
+    sudo systemctl daemon-reload
+    sudo systemctl start docker-registry.service
     ```
 
 For more information on the Docker Distribution project, see
@@ -347,99 +359,30 @@ components.
 
     ```
     cd $HOME
+    mkdir -p git/rocksdb && cd git
     git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
     cd rocksdb
     sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
     sed -i -e "s/-momit-leaf-frame-pointer/-DDUMMY/" Makefile
     make shared_lib && sudo INSTALL_PATH=/usr make install-shared && sudo ldconfig
     ```
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
+    >***NOTE:*** Change the value of **-march** to the z Systems model type, e.g., **z196**,
+    > if your Linux system is not running on a z Systems EC12.
 
-3.  Delete the rocksdb build directory:
-
-    ```
-    cd $HOME
-    rm -rf $HOME/rocksdb
-    ```
-
-Build the Hyperledger Fabric Core
-=================================
-The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
-
->***NOTE:*** The **/\<golang_home\>/go** directory represents where Golang
->was installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
->If you built Golang using this document, you have already added the
->Golang **bin** directory to your **PATH**.
-
-1.  Download the Hyperledger Fabric code into a writeable directory:
-
-    ```
-    mkdir -p $HOME/src/github.com/hyperledger
-    export GOPATH=$HOME
-    cd $HOME/src/github.com/hyperledger
-    git clone https://github.com/hyperledger/fabric.git
-    cd fabric
-    ```
-2.  Setup environment variables:
-
-    ```
-    export GOROOT=/<golang_home>/go
-    export PATH=/<golang_home>/go/bin:$PATH
-    export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-    export CGO_CFLAGS=" "
-    ```
-    > ***NOTE:*** If you are going to be rebuilding Golang or RocksDB, add the
-    > environment variables in steps 1 and 2 to your **.bash_profile** file.
-
-3.  Build the Hyperledger Fabric executable binaries. The peer binary
-    runs validating peer nodes and the membersrvc
-    binary is the membership and security server that handles enrollment
-    and certificate requests:
-
-    ```
-    cd $GOPATH/src/github.com/hyperledger/fabric/peer
-    go build
-    cd $GOPATH/src/github.com/hyperledger/fabric/membersrvc
-    go build -o membersrvc server.go
-    ```
-For a more permanent solution, you can create shell scripts to start the
-peer and the membership and security services executables in the
-background and re-direct logging output to a file.
-
-1.  Create a file called **fabric-peer.sh** located in
-    **/usr/local/bin** with the executable attribute set:
-
-    ```bash
-    #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/peer
-    ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
-    ```
-    > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
-
-2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
-    with the executable attribute set:
-
-    ```bash
-    #!/bin/bash
-    cd <parent-directory>/src/github.com/hyperledger/fabric/membersrvc
-    ./membersrvc > /var/log/membersrvc.log 2>&1 &
-    ```
-    > **NOTE:** Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
-
-Build a Golang Toolchain Docker Image
-=====================================
+Build a Docker Image for Hyperledger Fabric Use
+===============================================
 The section describes the steps required to build a Docker image that is
-comprised of the Golang programming language toolchain built upon the
+comprised of the Golang programming language toolchain and RocksDB built upon the
 SLES operating system. There is no need to download any pre-existing
 Docker images from the Docker Hub or from any other Docker registry that
 is on the internet.
 
-It is a two-step process to build the Golang toolchain Docker image:
+It is a two-step process to build the Docker image:
 
 1.  Build your own SLES Docker image from scratch.
 
-2.  Build a Golang toolchain Docker image from the base SLES Docker
-    image built in step 1.
+2.  Build a Golang toolchain Docker image, which includes RocksDB, from the
+    base SLES Docker image built in step 1.
 
 This Docker image is used by the Hyperledger Fabric peer component when
 deploying Chaincode. The peer communicates with the Docker Daemon to
@@ -455,7 +398,7 @@ Build a Base SLES Docker Image
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
 
-2.  Create a new file called **/usr/local/bin/mkimage-zypp.sh** and paste the following contents into the new file. Enable the executable attribute for the new file.
+2.  Create a new file called **/usr/local/bin/mkimage-zypp.sh** in **/usr/local/bin** and paste the following contents into the new file. Enable the executable attribute for the new file.
 
     ```
     #!/usr/bin/env bash
@@ -531,14 +474,15 @@ Build a Base SLES Docker Image
     rm -rf "$target"
     ```
 
-3.  Execute the **mkimage-zypp.sh** script to create and import the SLES
+3.  Execute the **mkimage-yum.sh** script to create and import the SLES
     Docker image:
 
     ```
     sudo mkimage-zypp.sh slesbase
     ```
-4.  Obtain the **slesbase** Docker image’s **TAG**.
-    The **slesbase:\<TAG\>** is required to build the Golang
+
+4.  Obtain the **rhelbase** Docker image’s **TAG**.
+    The **rhelbase:\<TAG\>** is required to build the Golang
     toolchain Docker image:
 
     ```
@@ -557,7 +501,7 @@ Build a Base SLES Docker Image
     > *docker tag slesbase:\<TAG\> \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>   
     > docker push \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>*
 
-Build a Golang Toolchain Docker Image from the Base SLES Docker Image
+Build a Golang and RocksDB Docker Image from the Base SLES Docker Image
 ---------------------------------------------------------------------
 Once the base SLES Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
@@ -571,77 +515,114 @@ to build a Golang toolchain Docker image:
 
     ```
     cd $HOME
+    mkdir dockerbuild
+    mv git/rocksdb dockerbuild
+    mv go dockerbuild
+    cd dockerbuild
     vi Dockerfile
     ```
+
 3. Cut and paste the following lines into your Dockerfile and then save
 the file:
 
     ```
     FROM slesbase:<TAG>
-    RUN zypper --non-interactive --no-gpg-check in gcc gcc-c++ make git-core
+    RUN zypper --non-interactive --no-gpg-check in gcc gcc-c++ make git-core zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
     COPY go /usr/local/go
+    COPY rocksdb /tmp/rocksdb
+    WORKDIR /tmp/rocksdb
+    RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
     ENV GOPATH=/opt/gopath
     ENV GOROOT=/usr/local/go
     ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-    RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
     WORKDIR $GOPATH
     ```
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
     > step 4 of [Build a Base SLES Docker Image](#build-a-base-rhel-docker-image).
 
-4.  Make sure that a copy of the **go** directory is in your
-    **$HOME** directory. If you used the
-    **$HOME** directory when performing the instructions
-    in section [Building the Golang Toolchain](#building-the-golang-toolchain)
-    then you should already have your built **go** directory contained in
-    **$HOME**.
-
-5.  Issue the **docker build** command:
+4.  Issue the **docker build** command:
 
     ```
-    cd $HOME
-    docker build -t <docker_registry_host_ip>:5050/s390x/golang -f <docker_file> .
+    docker build -t hyperledger/fabric-baseimage -f Dockerfile .
     ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry. Replace
-    > **\<docker_file\>** with **Dockerfile** or the name of your file
-    > containing the Docker statements listed in step 3.
 
-6.  Confirm that your new image was created by issuing the **docker
+5.  Confirm that your new image was created by issuing the **docker
     images** command.
 
-7.  Push your new Golang toolchain Docker image to your Docker Registry:
-
+6.  **Optional:** Push your new Golang toolchain and RocksDB Docker image
+    to your Docker Registry:
     ```
-    docker push <docker_registry_host_ip>:5050/s390x/golang
+    docker tag hyperledger/fabric-baseimage <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
+    docker push <docker_registry_host_ip>:5050/hyperledger/fabric-baseimage
     ```
     > ***NOTE:*** Replace **<docker_registry_host_ip>** with the IP
     > address of the host that is running your Docker Registry.
 
-8.  Update your Hyperledger Fabric peer’s configuration file and save.
-    The following changes inform the peer to use your Golang toolchain
-    Docker image when executing Chaincode transactions:
+
+Build the Hyperledger Fabric Core
+=================================
+The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
+
+1.  Download the Hyperledger Fabric code into a writeable directory:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
-    vi core.yaml
+    cd $HOME
+    mkdir -p fabricwork/src/github.com/hyperledger
+    cd fabricwork/src/github.com/hyperledger
+    git clone https://github.com/hyperledger/fabric.git
     ```
+2.  Setup environment variables prior to building the Hyperledger Fabric components:
 
-    a) Replace the **chaincode.golang.Dockerfile** parameter (located within lines 280-290) with the following:
+    ```
+    export GOROOT=/usr/local/go
+    export GOPATH=$HOME/fabricwork
+    ```
+    > ***NOTE:*** Also add the the GOPATH environment variable to root's
+    > **.bash_profile** file if you run the Hyperledger Fabric peer or
+    > membersrvc executables natively.
 
-      ```
-      Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
-        COPY src $GOPATH/src
-        WORKDIR $GOPATH
-      ```
+3.  Build the Hyperledger Fabric executable binaries. The peer binary
+    runs validating peer nodes and the membersrvc binary is the membership
+    and security server that handles enrollment and certificate requests.
+    In addition to the peer and membersrvc executables, supporting Docker images
+    are created for development use. The **Makefile** is altered to allow for the
+    use of your own **hyperledger/fabric-baseimage** Docker image:
 
-      b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
+    ```
+    sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
+    cd $GOPATH/src/github.com/hyperledger/fabric
+    make peer membersrvc
+    ```
+    >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin** directory
 
-      ```
-      Dockerfile: |
-        FROM <docker_registry_host_ip>:5050/s390x/golang
-      ```
+***Optional:*** If you are planning to run the Fabric executables locally and
+not inside docker containainers, you can create shell scripts to start the
+peer and the membership and security services executables in the background
+and re-direct logging output to a file.
+
+1.  Create a file called **fabric-peer.sh** located in
+    **/usr/local/bin** with the executable attribute set:
+
+    ```bash
+    #!/bin/bash
+    export GOPATH=<parent-directory>
+    cd $GOPATH/src/github.com/hyperledger/fabric/build/bin
+    ./peer node start --logging-level=debug > /var/log/fabric-peer.log 2>&1 &
+    ```
+    > **NOTE:** Change **\<parent-directory\>** to the root directory of where
+    the Hyperledger Fabric code is located (up to, but not including the **src** directory).
+
+2.  Create a file called **membersrvc.sh** located in **/usr/local/bin**
+    with the executable attribute set:
+
+    ```bash
+    #!/bin/bash
+    export GOPATH=<parent-directory>
+    cd $GOPATH/src/github.com/hyperledger/fabric/build/bin
+    ./membersrvc > /var/log/membersrvc.log 2>&1 &
+    ```
+    > **NOTE:** Change **\<parent-directory\>** to the root directory of where
+    the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Build Hyperledger Fabric Docker Images
 --------------------------------------
@@ -654,156 +635,30 @@ However, if you would like to run your peer(s) or membership services
 components in their own Docker containers, perform the following steps
 to build their respective Docker images.
 
-1.  Update the Hyperledger Fabric’s core.yaml file and save:
-
-    ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
-    vi core.yaml
-    ```
-
-2. Replace the **peer.Dockerfile** parameter (located within lines 90-100) with the following:
-
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN zypper --non-interactive --no-gpg-check in zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
-      RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-      # Copy GOPATH src and install Peer
-      COPY src $GOPATH/src
-      RUN mkdir -p /var/hyperledger/db
-      WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      ENV PATH $GOPATH/bin:$PATH
-      RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
-    ```
-    > ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP
-    > address of the host that is running your Docker Registry.  
-    >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
-
-3.  Build the **hyperledger-peer** and **membersrvc** Docker images:
-
-    ```
-    cd $HOME/src/github.com/hyperledger/fabric/core/container
-    go test -timeout=20m -run BuildImage_Peer
-    go test -timeout=20m -run BuildImage_Obcca
-    ```
-    > ***NOTE:*** Both of the images are also built when running the Unit Tests.
-
-4.  Verify that the **hyperledger-peer** and **membersrvc** images are
-    displayed after issuing a **docker images** command:
-
-    ```
-    docker images
-    ```
+```
+cd $GOPATH/src/github.com/hyperledger/fabric
+make peer-image membersrvc-image
+```
 
 Unit Tests
 ==========
-If you feel inclined to run the Hyperledger Fabric unit tests, there are
-a few minor changes that need to be made to some Golang test files prior
-to invoking the unit tests.
+If you feel inclined to run the Hyperledger Fabric unit tests, follow
+the steps below:
 
-Test File Changes
------------------
-1.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
-    and replace the **peer.Dockerfile** parameter with the following:
+```
+sudo rm -rf /var/hyperledger
+cd $GOPATH/src/github.com/hyperledger/fabric
+sudo GOROOT=/usr/local/go GOPATH=<parent-directory> PATH=$PATH:/usr/local/go/bin make unit-test
+```
 
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-      # Install RocksDB
-      RUN cd /tmp && git clone --branch v4.1 --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
-      WORKDIR /tmp/rocksdb
-      RUN sed -i -e "s/-march=native/-march=zEC12/" build_tools/build_detect_platform
-      RUN sed -i -e "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-      RUN zypper --non-interactive --no-gpg-check in zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
-      RUN make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-      # Copy GOPATH src and install Peer
-      COPY src $GOPATH/src
-      RUN mkdir -p /var/hyperledger/db
-      WORKDIR $GOPATH/src/github.com/hyperledger/fabric/peer
-      ENV PATH $GOPATH/bin:$PATH
-      RUN CGO_CFLAGS=" " CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy" go install && cp $GOPATH/src/github.com/hyperledger/fabric/peer/core.yaml $GOPATH/bin
-    ```
-      >***NOTE:*** Change the value of **-march** to **z196** if your Linux system is not running on a z Systems EC12 or later model.
-2.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/membersrvc/ca/ca_test.yaml*
-    and replace the **chaincode.golang.Dockerfile** parameter with the
-    following:
-
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-      COPY src $GOPATH/src
-      WORKDIR $GOPATH
-    ```
-
-3.  Perform steps 1 and 2 for file:  
-    *$HOME/src/github.com/hyperledger/fabric/core/ledger/genesis/genesis_test.yaml*  
-
-4.  Edit *$HOME/src/github.com/hyperledger/fabric/core/chaincode/chaincodetest.yaml*:  
-
-    a) Perform steps 1 and 2 for the chaincodetest.yaml file.
-
-    b) Replace the **chaincode.car.Dockerfile** parameter (located within lines 295-300) with the following:
-
-    ```
-    Dockerfile: |
-      FROM <docker_registry_host_ip>:5050/s390x/golang
-    ```
-
-5.  Edit
-    *$HOME/src/github.com/hyperledger/fabric/core/container/controller_test.go*
-    and replace **busybox** with **s390x/busybox**.
-
-> ***NOTE:*** Replace **\<docker_registry_host_ip\>** with the IP address of the host
-> that is running your Docker Registry.
-
-Running the Unit Tests
-----------------------
-
-1.  Bring up a window (via ssh or screen) of the system where you built
-    the Hyperledger Fabric components and start the Fabric Peer:
-
-    ```
-    cd $HOME/src/github.com/hyperledger/fabric/peer
-    sudo ./peer node start
-    ```
-
-2.  From another window of the same Linux system, create an executable
-    script called **unit-tests.sh** in **$HOME** using the
-    following lines:
-
-    ```bash
-    #!/bin/bash
-    export GOPATH=<parent-directory>
-    export GOROOT=/<golang_home>/go
-    export PATH=/<golang_home>/go/bin:$PATH
-    go test -timeout=20m $(go list github.com/hyperledger/fabric/... | grep -v /vendor/ | grep -v /examples/)
-    ```
-    > ***NOTE:*** If you have root access and would like to run the unit
-    > tests, simply set the environment variables listed above and then
-    > issue the go test command. Replace
-    > **\<golang_home\>** with the directory where Golang was
-    > installed after performing step 4 in [Building the Golang Toolchain](#building-the-golang-toolchain).
-    > Change **\<parent-directory\>** to the root directory of where the Hyperledger Fabric code is located.
-
-3.  Invoke the unit-tests.sh script:
-
-    ```
-    cd $HOME
-    sudo ./unit-tests.sh
-    ```
+> **NOTE:** Change **\<parent-directory\>** to the root directory of where
+the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Behave Tests
 ============
 A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
 
-1. Install pre-reqs for Behave:
+1. Install prerequisites for Behave:
 
     ```
     cd $HOME
@@ -814,11 +669,10 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
     sudo pip install behave nose docker-compose
     sudo pip install -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3
     ```
-
-2. Add a firewall rule to ensure traffic flow on the docker0 interface with a destination port of 2375 (docker daemon API port).  The Behave tests take advantage of Docker containers to test the Fabric peer's functionality.
+2. Add a firewall rule to ensure traffic flow on the docker0 interface with a  destination port of 2375 (docker daemon API port).  The Behave tests take advantage of Docker containers to test the Fabric peer's functionality.
 
     ```
-    iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
+    sudo iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
     ```
 
 3.  Shutdown any peer instances prior to running the Behave tests:
@@ -830,6 +684,6 @@ A thorough suite of Behave tests are included with the Hyperledger Fabric code b
 4. Run the Behave tests:
 
     ```
-    cd $HOME/src/github.com/hyperledger/fabric/bddtests
-    behave
+    cd $HOME/fabricwork/src/github.com/hyperledger/fabric
+    make behave
     ```
