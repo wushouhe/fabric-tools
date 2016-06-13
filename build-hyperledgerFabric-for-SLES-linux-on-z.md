@@ -6,7 +6,7 @@ technology, Hyperledger Fabric, on the Linux on z Systems platform.
 
 More importantly, you will create the Docker artifacts using the base
 SLES 12 SP1 system on which you will deploy. The base Docker image will be
-SLES 12 SP1 based and have access to the same yum repositories as the
+SLES 12 SP1 based and have access to the same repositories as the
 system on which you deploy. This eliminates the need to download any
 pre-built Docker images from the public Docker repository, eliminating
 one potential security exposure. The Docker images you create will be
