@@ -233,7 +233,7 @@ Installing the Docker Client / Daemon
     sudo usermod -aG docker <non-root-user>
     sudo systemctl daemon-reload
     sudo systemctl start docker.service
-    rm -rf $HOME/docker-1.10.1-rhel7.2-20160408*
+    rm -rf $HOME/docker-1.9.1-sles12-20151127*
     ```
 
     > ***NOTE:*** In order to issue Docker commands from a
@@ -476,15 +476,15 @@ Build a Base SLES Docker Image
     rm -rf "$target"
     ```
 
-3.  Execute the **mkimage-yum.sh** script to create and import the SLES
+3.  Execute the **mkimage-zypp.sh** script to create and import the SLES
     Docker image:
 
     ```
     sudo mkimage-zypp.sh slesbase
     ```
 
-4.  Obtain the **rhelbase** Docker image’s **TAG**.
-    The **rhelbase:\<TAG\>** is required to build the Golang
+4.  Obtain the **slesbase** Docker image’s **TAG**.
+    The **slesbase:\<TAG\>** is required to build the Golang
     toolchain Docker image:
 
     ```
@@ -540,7 +540,7 @@ the file:
     WORKDIR $GOPATH
     ```
     > ***NOTE:*** Replace **\<TAG\>** with the TAG value obtained above in
-    > step 4 of [Build a Base SLES Docker Image](#build-a-base-rhel-docker-image).
+    > step 4 of [Build a Base SLES Docker Image](#build-a-base-sles-docker-image).
 
 4.  Issue the **docker build** command:
 
