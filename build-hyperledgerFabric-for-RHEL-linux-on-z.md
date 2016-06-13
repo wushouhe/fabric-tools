@@ -594,7 +594,7 @@ the steps below:
 ```
 sudo rm -rf /var/hyperledger
 cd $GOPATH/src/github.com/hyperledger/fabric
-sudo GOPATH=<parent-directory> make unit-test
+sudo GOROOT=/usr/local/go GOPATH=<parent-directory> PATH=$PATH:/usr/local/go/bin make unit-test
 ```
 
 > **NOTE:** Change **\<parent-directory\>** to the root directory of where
