@@ -1,4 +1,7 @@
-**NOTE: On June 9, 2016, a number of changes were applied to the Hyperledger Fabric codebase.  This has affected numerous sections of the documentation contained within this repository.  We are working on updating this documentation as soon as possible.  Thanks for your understanding.**
+**NOTE: Due to the evolving Hyperledger Fabric codebase, there will be times that the
+information contained in this repository will become obsolete. Every effort is
+made to keep this documentation current and in sync with the codebase.
+Thanks for your understanding.**
 
 
 Overview
@@ -22,13 +25,14 @@ Usage:  zSystemsFabricBuild.sh options
 
 This script installs and configures a Hyperledger Fabric environment on a Linux on
 IBM z Systems instance.  The execution of this script assumes that you are starting
-from a new Linux on z Systems instance.  The script will autodetect the Linux distribution
-(currently RHEL, SLES, and Ubuntu) as well as the z Systems machine type, and build out
-the necessary components.
+from a new Linux on z Systems instance.  The script will autodetect the Linux
+distribution (currently RHEL, SLES, and Ubuntu) as well as the z Systems machine
+type, and build out the necessary components.  After running this script, logout and
+then login to pick up updates to Hyperledger Fabric specific environment variables.
 
-NOTE: Upon completion of the script, source .bash_profile
-(or .profile for Ubuntu) to update your PATH and Hyperledger Fabric related
-environment variables.
+NOTE: Prerequisite packages are required to build and use RocksDB which may not
+reside in your default package management repositories.  There is the possibility
+that extra steps might be needed to add the additional repositories to your system.
 
 The default action of the script -- without any arguments -- is
 to build the following components:
@@ -41,6 +45,6 @@ to build the following components:
 -b   Build the hyperledger/fabric-baseimage. If this option is not specifed,
      the default action is to pull the hyperledger/fabric-base image from Docker Hub.
 
--c   Rebuild the Hyperledger Fabric components.  A previous installation is required to use this option.
+-c   Rebuild the Hyperledger Fabric components.  A previous installation is
+     required to use this option.
 ```
-
