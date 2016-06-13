@@ -597,8 +597,7 @@ The Hyperledger Fabric Core contains code for running validating peers and membe
     ```
     >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin** directory
 
-***Optional:*** If you are planning to run the Fabric executables locally and
-not inside docker containainers, you can create shell scripts to start the
+***Optional:*** If you are planning to run the Fabric executables locally, you can create shell scripts to start the
 peer and the membership and security services executables in the background
 and re-direct logging output to a file.
 

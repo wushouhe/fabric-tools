@@ -302,10 +302,10 @@ services for enrollment and certificate authority tasks.
     ```
     >***NOTE:*** The peer and membersrvc executables are placed into the **$GOPATH/src/github.com/hyperledger/fabric/build/bin** directory
 
-***Optional:*** If you are planning to run the Fabric executables locally and
-not inside docker containainers, you can create shell scripts to start the
-peer and the membership and security services executables in the background
-and re-direct logging output to a file.
+***Optional:*** If you are planning to run the Fabric executables locally,
+you can create shell scripts to start the peer and the membership
+and security services executables in the background and re-direct
+logging output to a file.
 
 1.  Create a file called **fabric-peer.sh** located in
     **/usr/local/bin** with the executable attribute set:
