@@ -1,5 +1,5 @@
 Hyperledger Fabric Build for Ubuntu on Linux on z Systems
-=========================================================
+---------------------------------------------------------
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
 technology, Hyperledger Fabric, on the Linux on z Systems platform.
@@ -43,7 +43,7 @@ For more information about the Hyperledger Fabric project, see
 > **secure_path** variable.
 
 Installing Golang
-=================
+-----------------
 The Hyperledger Fabric and the Docker Registry are written using the
 Golang programming language. Therefore, a Golang compiler needs to be
 installed in order to compile the Hyperledger Fabric and Docker Registry
@@ -60,7 +60,7 @@ Ubuntu has packaged Go in 16.04 LTS (Xenial). Install it with the command:
 in your **.profile** file and root's **.profile** file for using the Golang toolchain.
 
 Build and Install RocksDB
-=========================
+-------------------------
 RocksDB is an embeddable persistent key-value store for fast storage and
 is used by the Hyperledger Fabric peer, membership and security service
 components.
@@ -87,7 +87,7 @@ components.
     > **z196**, if your Linux system is not running on a z Systems EC12.
 
 Docker Daemon & Docker Registry
-===============================
+-------------------------------
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
@@ -98,9 +98,7 @@ are covered later in this document.
 A local Docker registry can be used for the Hyperledger Fabric environment
 if you are not going to access public Docker images.
 
-
-Installing the Docker Packages
--------------------------------------
+## Installing the Docker Packages
 
 1.  Install the Docker and Docker registry packages:
 
@@ -118,8 +116,7 @@ Installing the Docker Packages
     > you'll have to update your PATH environment variable:  
     > **export PATH=$PATH:/usr/lib/go-1.6/bin**
 
-Update Docker Configuration files  
----------------------------------
+## Update Docker Configuration files  
 
 1.  Update the Docker daemon start options:
 
@@ -148,7 +145,7 @@ Update Docker Configuration files
     ```
 
 Build a Docker Image for Hyperledger Fabric Use
-===============================================
+-----------------------------------------------
 This section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain and RocksDB built upon the
 Ubuntu operating system. There is no need to download any pre-existing
@@ -170,8 +167,8 @@ the **peer chaincode deploy** command. Docker containers are started by the peer
 and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
-Build a Base Ubuntu Docker Image
---------------------------------
+## Build a Base Ubuntu Docker Image
+
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section
     above for installing, configuring and starting the Docker Daemon and Docker Registry.
@@ -214,8 +211,8 @@ Build a Base Ubuntu Docker Image
     > *docker tag ubuntu-base \<docker_registry_host_ip\>:5050/ubuntu-base  
     > docker push \<docker_registry_host_ip\>:5050/ubuntu-base*
 
-Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
--------------------------------------------------------------------------
+## Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
+
 Once the base Ubuntu Docker image is created, complete the following steps
 to build a Golang and RocksDB Docker image:
 
@@ -267,7 +264,7 @@ to build a Golang and RocksDB Docker image:
     > address of the host that is running your Docker Registry.
 
 Build the Hyperledger Fabric Core
-=================================
+---------------------------------
 The Hyperledger Fabric Core contains code for running validating peers and membership
 services for enrollment and certificate authority tasks.
 
@@ -331,8 +328,8 @@ logging output to a file.
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
     the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
-Build Hyperledger Fabric Docker Images
---------------------------------------
+## Build Hyperledger Fabric Docker Images
+
 If you have progressed through this document from the beginning, you
 already built the components necessary to run the Hyperledger Fabric
 peer along with the Hyperledger Fabric membership services and security
@@ -348,7 +345,7 @@ to build their respective Docker images:
     ```
 
 Unit Tests
-==========
+----------
 If you feel inclined to run the Hyperledger Fabric unit tests, follow
 the steps below:
 
@@ -362,7 +359,7 @@ sudo GOPATH=<parent-directory> make unit-test
 the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Behave Tests
-============
+------------
 A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
 
 1. Install prerequisites for Behave:
