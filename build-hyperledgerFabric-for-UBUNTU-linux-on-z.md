@@ -98,7 +98,7 @@ are covered later in this document.
 A local Docker registry can be used for the Hyperledger Fabric environment
 if you are not going to access public Docker images.
 
-## Installing the Docker Packages
+### Installing the Docker Packages
 
 1.  Install the Docker and Docker registry packages:
 
@@ -116,7 +116,7 @@ if you are not going to access public Docker images.
     > you'll have to update your PATH environment variable:  
     > **export PATH=$PATH:/usr/lib/go-1.6/bin**
 
-## Update Docker Configuration files  
+### Update Docker Configuration files  
 
 1.  Update the Docker daemon start options:
 
@@ -167,7 +167,7 @@ the **peer chaincode deploy** command. Docker containers are started by the peer
 and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
-## Build a Base Ubuntu Docker Image
+### Build a Base Ubuntu Docker Image
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to the [Docker Daemon & Docker Registry](#docker-daemon--docker-registry) section
@@ -211,7 +211,7 @@ transactions, e.g., invoke or query.
     > *docker tag ubuntu-base \<docker_registry_host_ip\>:5050/ubuntu-base  
     > docker push \<docker_registry_host_ip\>:5050/ubuntu-base*
 
-## Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
+### Build a Golang and RocksDB Docker Image from the Base Ubuntu Docker Image
 
 Once the base Ubuntu Docker image is created, complete the following steps
 to build a Golang and RocksDB Docker image:
@@ -328,7 +328,7 @@ logging output to a file.
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
     the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
-## Build Hyperledger Fabric Docker Images
+### Build Hyperledger Fabric Docker Images
 
 If you have progressed through this document from the beginning, you
 already built the components necessary to run the Hyperledger Fabric
