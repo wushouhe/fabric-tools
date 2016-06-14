@@ -1,5 +1,5 @@
 Hyperledger Fabric Build for SLES on Linux on z Systems
-=========================================================
+-------------------------------------------------------
 This document describes the steps to build, configure and install the
 infrastructure components associated with IBM’s Open Blockchain
 technology, Hyperledger Fabric, on the Linux on z Systems platform.
@@ -45,7 +45,7 @@ For more information about the Hyperledger Fabric project, see
 > **secure_path** variable.
 
 Building Golang
-===============
+---------------
 The Hyperledger Fabric and the Docker Registry are written using the
 Golang programming language. Therefore, a Golang compiler needs to be
 built in order to compile the Hyperledger Fabric and Docker Registry
@@ -108,8 +108,8 @@ The bootstrap tool is placed into a bzip tarball named
 is used in the next step to compile the Golang programming language
 source code on Linux on z Systems.
 
-Building the Golang Toolchain
------------------------------
+### Building the Golang Toolchain
+
 To build the Golang toolchain you need to have successfully built the
 Golang bootstrap tool outlined in the [Cross-Compiling the Bootstrap Tool](#cross-compiling-the-bootstrap-tool)
 section of this document. After building the bootstrap tool, login to
@@ -156,7 +156,7 @@ environment variable to use the new toolchain.  The **go** directory is typicall
     ```
 
 Docker
-======
+------
 The Hyperledger Fabric peer relies on Docker to deploy and run Chaincode
 (aka Smart Contracts). In addition, for development purposes, the
 Hyperledger Fabric peer service and the membership and security service
@@ -164,8 +164,7 @@ can both run in Docker containers. Instructions for building both a peer
 service Docker image and a membership and security service Docker image
 are covered later in this document.
 
-Installing the Docker Client / Daemon
--------------------------------------
+### Installing the Docker Client / Daemon
 
 1.  Install prerequisite package for Docker:
 
@@ -248,8 +247,8 @@ Installing the Docker Client / Daemon
     > you'll have to update your PATH environment variable:  
     > **export PATH=$PATH:/usr/local/go/bin**
 
-Building the Docker Registry
-----------------------------
+### Building the Docker Registry
+
 The Docker Registry 2.0 implementation for storing and distributing
 Docker images is part of the GitHub Docker Distribution project. The
 Docker Distribution project consists of a toolset to pack, ship, store,
@@ -346,7 +345,7 @@ For more information on the Docker Distribution project, see
 <https://github.com/docker/distribution>.
 
 Build and Install RocksDB
-=========================
+-------------------------
 RocksDB is an embeddable persistent key-value store for fast storage and
 is used by the Hyperledger Fabric peer, membership and security service
 components.
@@ -372,7 +371,7 @@ components.
     > if your Linux system is not running on a z Systems EC12.
 
 Build a Docker Image for Hyperledger Fabric Use
-===============================================
+-----------------------------------------------
 The section describes the steps required to build a Docker image that is
 comprised of the Golang programming language toolchain and RocksDB built upon the
 SLES operating system. There is no need to download any pre-existing
@@ -394,8 +393,7 @@ the **peer chaincode deploy** command. Docker containers are started by the peer
 and execute the Chaincode binary awaiting further Blockchain
 transactions, e.g., invoke or query.
 
-Build a Base SLES Docker Image
-------------------------------
+### Build a Base SLES Docker Image
 
 1.  Make sure that your Docker Daemon and Docker Registry are started.
     Refer to [Installing the Docker Client / Daemon](#installing-the-docker-client--daemon) and [Building the Docker Registry](#building-the-docker-registry) sections above for building and starting the Docker Daemon and Docker Registry.
@@ -503,8 +501,8 @@ Build a Base SLES Docker Image
     > *docker tag slesbase:\<TAG\> \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>   
     > docker push \<docker_registry_host_ip\>:5050/slesbase:\<TAG\>*
 
-Build a Golang and RocksDB Docker Image from the Base SLES Docker Image
----------------------------------------------------------------------
+### Build a Golang and RocksDB Docker Image from the Base SLES Docker Image
+
 Once the base SLES Docker image is created, complete the following steps
 to build a Golang toolchain Docker image:
 
@@ -562,7 +560,7 @@ the file:
 
 
 Build the Hyperledger Fabric Core
-=================================
+---------------------------------
 The Hyperledger Fabric Core contains code for running validating peers and membership services for enrollment and certificate authority tasks.
 
 1.  Download the Hyperledger Fabric code into a writeable directory:
@@ -625,8 +623,8 @@ and re-direct logging output to a file.
     > **NOTE:** Change **\<parent-directory\>** to the root directory of where
     the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
-Build Hyperledger Fabric Docker Images
---------------------------------------
+### Build Hyperledger Fabric Docker Images
+
 If you have progressed through this document from the beginning, you
 already built the components necessary to run the Hyperledger Fabric
 peer along with the Hyperledger Fabric membership services and security
@@ -642,7 +640,7 @@ make peer-image membersrvc-image
 ```
 
 Unit Tests
-==========
+----------
 If you feel inclined to run the Hyperledger Fabric unit tests, follow
 the steps below:
 
@@ -656,7 +654,7 @@ sudo GOROOT=/usr/local/go GOPATH=<parent-directory> PATH=$PATH:/usr/local/go/bin
 the Hyperledger Fabric code is located (up to, but not including the **src** directory).
 
 Behave Tests
-============
+------------
 A thorough suite of Behave tests are included with the Hyperledger Fabric code base.  These Behavior-driven development test cases are written in a natural language and backed up by python scripts.  The behave tests take advantage of the Docker Compose tool to setup multi-peer Hyperledger Fabric Docker containers and run scenarios that exercise security, consensus, and chaincode execution, to name a few.
 
 1. Install prerequisites for Behave:
