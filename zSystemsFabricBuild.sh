@@ -152,10 +152,10 @@ fi
 # Build and install the RocksDB database component
 build_rocksdb() {
   echo -e "\n*** build_rocksdb ***\n"
-  cd /tmp
+  cd $HOME
 
-  if [ -d /tmp/rocksdb ]; then
-    rm -rf /tmp/rocksdb
+  if [ -d $HOME/rocksdb ]; then
+    rm -rf $HOME/rocksdb
   fi
 
   git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git
@@ -167,8 +167,6 @@ build_rocksdb() {
     echo -e "\nERROR: Unable to build the RocksDB shared library.\n"
     exit 1
   fi
-  cd /tmp
-  rm -rf /tmp/rocksdb
   echo -e "*** DONE ***\n"
 }
 
@@ -271,11 +269,9 @@ RUN yum -y install gcc gcc-c++ make git snappy-devel zlib-devel bzip2-devel
 COPY go /usr/local/go
 ENV GOROOT=/usr/local/go
 # Install RocksDB
-RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+COPY rocksdb /tmp/rocksdb
 WORKDIR /tmp/rocksdb
-RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
 ENV GOPATH=/opt/gopath
 ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
 EOF
@@ -356,11 +352,9 @@ RUN zypper --non-interactive --no-gpg-check in gcc gcc-c++ make git-core zlib zl
 COPY go /usr/local/go
 ENV GOROOT=/usr/local/go
 # Install RocksDB
-RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+COPY rocksdb /tmp/rocksdb
 WORKDIR /tmp/rocksdb
-RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
 ENV GOPATH=/opt/gopath
 ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
 EOF
@@ -387,11 +381,9 @@ RUN apt-get update
 RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
 ENV GOROOT=/usr/lib/go-1.6
 # Install RocksDB
-RUN cd /tmp && git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git && cd rocksdb
+COPY rocksdb /tmp/rocksdb
 WORKDIR /tmp/rocksdb
-RUN sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-RUN sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-RUN make shared_lib  && INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
+RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
 ENV GOPATH=/opt/gopath
 ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
 EOF
@@ -550,6 +542,7 @@ EOF
   rm -f $HOME/copygo.sh
   rm -f $HOME/get-pip.py
 
+  echo -e "Cleanup Docker artifacts\n"
   # Delete any temporary Docker containers created during the build process
   if [[ ! -z $(docker ps -aq) ]]; then
       docker rm -f $(docker ps -aq)
