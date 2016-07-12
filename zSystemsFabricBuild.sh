@@ -111,10 +111,18 @@ get_machine_type() {
       MACHINE_TYPE="zEC12"
       ;;
       2964)
-      MACHINE_TYPE="zEC12"
+      if [ $OS_FLAVOR == 'ubuntu' ]; then
+        MACHINE_TYPE="z13"
+      else
+        MACHINE_TYPE="zEC12"
+      fi
       ;;
       2965)
-      MACHINE_TYPE="zEC12"
+      if [ $OS_FLAVOR == 'ubuntu' ]; then
+        MACHINE_TYPE="z13"
+      else
+        MACHINE_TYPE="zEC12"
+      fi
       ;;
       *)
       echo -e "\nERROR: Unknown machine architecture.\n"
