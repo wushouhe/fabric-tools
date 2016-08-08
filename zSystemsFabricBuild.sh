@@ -493,7 +493,6 @@ build_hyperledger_core() {
   cd $HOME/src/github.com/hyperledger
   # Delete fabric directory, if it exists
   rm -rf fabric
-  #git clone https://github.com/hyperledger/fabric.git
   git clone http://gerrit.hyperledger.org/r/fabric.git
 
   # Build the Hyperledger Fabric core components
