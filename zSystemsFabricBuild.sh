@@ -70,6 +70,7 @@ prereq_sles() {
 # Install prerequisite packages for an Unbuntu Hyperledger build
 prereq_ubuntu() {
   echo -e "\nInstalling Ubuntu prerequisite packages\n"
+  apt-get update
   apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
@@ -492,7 +493,8 @@ build_hyperledger_core() {
   cd $HOME/src/github.com/hyperledger
   # Delete fabric directory, if it exists
   rm -rf fabric
-  git clone https://github.com/hyperledger/fabric.git
+  #git clone https://github.com/hyperledger/fabric.git
+  git clone http://gerrit.hyperledger.org/r/fabric.git
 
   # Build the Hyperledger Fabric core components
   if [ $USE_DOCKER_HUB -eq 0 ] || [ $OS_FLAVOR == "sles" ]; then
@@ -545,6 +547,17 @@ export GOROOT=$GOROOT
 export GOPATH=$GOPATH
 export PATH=\$PATH:$GOROOT/bin:$GOPATH/bin
 EOF
+
+cat <<EOF >>/etc/environment
+GOROOT=$GOROOT
+GOPATH=$GOPATH
+EOF
+
+  # Add non-root user to docker group
+  BC_USER=`who am i | awk '{print $1}'`
+  if [ $BC_USER != "root" ]; then
+    usermod -aG docker $BC_USER
+  fi
 
   # Cleanup files and Docker images and containers
   rm -f $HOME/copygo.sh
