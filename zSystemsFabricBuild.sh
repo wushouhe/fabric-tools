@@ -181,83 +181,40 @@ build_rocksdb() {
 
 # Build a base hyperledger/fabric-baseimage for RHEL
 docker_base_image_rhel() {
-  # Option defaults
-  yum_config=/etc/yum.conf
-  if [ -f /etc/dnf/dnf.conf ] && command -v dnf &> /dev/null; then
-  	yum_config=/etc/dnf/dnf.conf
-  	alias yum=dnf
-  fi
-  install_groups="Core"
-  name=rhelbase
+  name="rhelbase"
 
-  target=$(mktemp -d --tmpdir $(basename $0).XXXXXX)
+  mkdir img || exit
+  mkdir -m 755 img/dev
+  mknod -m 600 img/dev/console c 5 1
+  mknod -m 600 img/dev/initctl p
+  mknod -m 666 img/dev/full c 1 7
+  mknod -m 666 img/dev/null c 1 3
+  mknod -m 666 img/dev/ptmx c 5 2
+  mknod -m 666 img/dev/random c 1 8
+  mknod -m 666 img/dev/tty c 5 0
+  mknod -m 666 img/dev/tty0 c 4 0
+  mknod -m 666 img/dev/urandom c 1 9
+  mknod -m 666 img/dev/zero c 1 5
 
-  mkdir -m 755 "$target"/dev
-  mknod -m 600 "$target"/dev/console c 5 1
-  mknod -m 600 "$target"/dev/initctl p
-  mknod -m 666 "$target"/dev/full c 1 7
-  mknod -m 666 "$target"/dev/null c 1 3
-  mknod -m 666 "$target"/dev/ptmx c 5 2
-  mknod -m 666 "$target"/dev/random c 1 8
-  mknod -m 666 "$target"/dev/tty c 5 0
-  mknod -m 666 "$target"/dev/tty0 c 4 0
-  mknod -m 666 "$target"/dev/urandom c 1 9
-  mknod -m 666 "$target"/dev/zero c 1 5
+  test -d /etc/yum && yum --installroot=$PWD/img --releasever=/ --setopt=tsflags=nodocs \
+  --setopt=group_package_types=mandatory -y install bash yum vim-minimal
+  test -d /etc/yum && cp -a /etc/yum* /etc/rhsm/* /etc/pki/* img/etc/
+  test -d /etc/yum && yum --installroot=$PWD/img clean all
 
-  # amazon linux yum will fail without vars set
-  if [ -d /etc/yum/vars ]; then
-  	mkdir -p -m 755 "$target"/etc/yum
-  	cp -a /etc/yum/vars "$target"/etc/yum/
-  fi
+  # in some cases the following line is needed. I still have not understood, why...
+  # test -d /etc/zypp && mkdir img/etc && cp -a /etc/zypp* /etc/products.d img/etc/
+  test -d /etc/zypp && zypper --root $PWD/img  -D /etc/zypp/repos.d/ \
+  --no-gpg-checks -n install -l bash zypper vim
+  test -d /etc/zypp && cp -a /etc/zypp* /etc/products.d img/etc/
 
-  if [[ -n "$install_groups" ]];
-  then
-      yum -c "$yum_config" --installroot="$target" --releasever=/ --setopt=tsflags=nodocs \
-          --setopt=group_package_types=mandatory -y groupinstall $install_groups
-  fi
+  rm -fr img/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
+  rm -fr img/usr/share/{man,doc,info,gnome/help}
+  rm -fr img/usr/share/cracklib
+  rm -fr img/usr/share/i18n
+  rm -fr img/etc/ld.so.cache
+  rm -fr img/var/cache/ldconfig/*
 
-  if [[ -n "$install_packages" ]];
-  then
-      yum -c "$yum_config" --installroot="$target" --releasever=/ --setopt=tsflags=nodocs \
-          --setopt=group_package_types=mandatory -y install $install_packages
-  fi
-
-  cp -ra /etc/yum/* "$target"/etc/yum/
-  cp -ra /etc/yum.repos.d "$target"/etc
-  yum -c "$yum_config" --installroot="$target" -y install net-tools
-  yum -c "$yum_config" --installroot="$target" -y clean all
-
-  cat > "$target"/etc/sysconfig/network <<EOF
-NETWORKING=yes
-HOSTNAME=localhost.localdomain
-EOF
-
-  # effectively: febootstrap-minimize --keep-zoneinfo --keep-rpmdb --keep-services "$target".
-  #  locales
-  rm -rf "$target"/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
-  #  docs and man pages
-  rm -rf "$target"/usr/share/{man,doc,info,gnome/help}
-  #  cracklib
-  rm -rf "$target"/usr/share/cracklib
-  #  i18n
-  rm -rf "$target"/usr/share/i18n
-  #  yum cache
-  rm -rf "$target"/var/cache/yum
-  mkdir -p --mode=0755 "$target"/var/cache/yum
-  #  sln
-  rm -rf "$target"/sbin/sln
-  #  ldconfig
-  rm -rf "$target"/etc/ld.so.cache "$target"/var/cache/ldconfig
-  mkdir -p --mode=0755 "$target"/var/cache/ldconfig
-
-  version=
-  for file in "$target"/etc/{redhat,system}-release
-  do
-      if [ -r "$file" ]; then
-          version="$(sed 's/^[^0-9\]*\([0-9.]\+\).*$/\1/' "$file")"
-          break
-      fi
-  done
+  version=`grep "VERSION_ID=" img/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
 
   if [ -z "$version" ]; then
       echo >&2 "warning: cannot autodetect OS version, using '$name' as tag"
@@ -265,9 +222,9 @@ EOF
   fi
 
   # Create base SLES Docker image
-  tar --numeric-owner -c -C "$target" . | docker import - $name:$version
+  tar --numeric-owner -c -C img . | docker import - $name:$version
   docker run -i -t --rm $name:$version /bin/bash -c 'echo success'
-  rm -rf "$target"
+  rm -rf img
 
   # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
   cd $HOME
@@ -297,50 +254,38 @@ EOF
 docker_base_image_sles() {
   name="slesbase"
 
-  target=$(mktemp -d --tmpdir $(basename $0).XXXXXX)
-  mkdir -m 755 "$target"/dev
-  mknod -m 600 "$target"/dev/console c 5 1
-  mknod -m 600 "$target"/dev/initctl p
-  mknod -m 666 "$target"/dev/full c 1 7
-  mknod -m 666 "$target"/dev/null c 1 3
-  mknod -m 666 "$target"/dev/ptmx c 5 2
-  mknod -m 666 "$target"/dev/random c 1 8
-  mknod -m 666 "$target"/dev/tty c 5 0
-  mknod -m 666 "$target"/dev/tty0 c 4 0
-  mknod -m 666 "$target"/dev/urandom c 1 9
-  mknod -m 666 "$target"/dev/zero c 1 5
+  mkdir img || exit
+  mkdir -m 755 img/dev
+  mknod -m 600 img/dev/console c 5 1
+  mknod -m 600 img/dev/initctl p
+  mknod -m 666 img/dev/full c 1 7
+  mknod -m 666 img/dev/null c 1 3
+  mknod -m 666 img/dev/ptmx c 5 2
+  mknod -m 666 img/dev/random c 1 8
+  mknod -m 666 img/dev/tty c 5 0
+  mknod -m 666 img/dev/tty0 c 4 0
+  mknod -m 666 img/dev/urandom c 1 9
+  mknod -m 666 img/dev/zero c 1 5
 
-  # install core packages
-  zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" install -l pattern:Minimal vim
-  cp -ra /etc/zypp "$target"/etc
-  cp -ra /etc/products.d "$target"/etc
-  zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" clean
-  zypper --non-interactive --no-gpg-check --reposd-dir /etc/zypp/repos.d --root "$target" refresh -d
+  test -d /etc/yum && yum --installroot=$PWD/img --releasever=/ --setopt=tsflags=nodocs \
+  --setopt=group_package_types=mandatory -y install bash yum vim-minimal
+  test -d /etc/yum && cp -a /etc/yum* /etc/rhsm/* /etc/pki/* img/etc/
+  test -d /etc/yum && yum --installroot=$PWD/img clean all
 
-  # locales
-  rm -rf
-  "$target"/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
+  # in some cases the following line is needed. I still have not understood, why...
+  test -d /etc/zypp && mkdir img/etc && cp -a /etc/zypp* /etc/products.d img/etc/
+  test -d /etc/zypp && zypper --root $PWD/img  -D /etc/zypp/repos.d/ \
+  --no-gpg-checks -n install -l bash zypper vim
+  test -d /etc/zypp && cp -a /etc/zypp* /etc/products.d img/etc/
 
-  # docs and man pages
-  rm -rf "$target"/usr/share/{man,doc,info,gnome/help}
+  rm -fr img/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
+  rm -fr img/usr/share/{man,doc,info,gnome/help}
+  rm -fr img/usr/share/cracklib
+  rm -fr img/usr/share/i18n
+  rm -fr img/etc/ld.so.cache
+  rm -fr img/var/cache/ldconfig/*
 
-  # cracklib
-  rm -rf "$target"/usr/share/cracklib
-
-  # i18n
-  rm -rf "$target"/usr/share/i18n
-
-  # zypp cache
-  rm -rf "$target"/var/cache/zypp
-  mkdir -p --mode=0755 "$target"/var/cache/zypp
-
-  # sln
-  rm -rf "$target"/sbin/sln
-
-  # ldconfig
-  rm -rf "$target"/etc/ld.so.cache "$target"/var/cache/ldconfig
-  mkdir -p --mode=0755 "$target"/var/cache/ldconfig
-  version=`grep "VERSION=" ${target}/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
+  version=`grep "VERSION_ID=" img/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
 
   if [ -z "$version" ]; then
     echo >&2 "warning: cannot autodetect OS version, using '$name' as tag"
@@ -348,9 +293,9 @@ docker_base_image_sles() {
   fi
 
   # Create base SLES Docker image
-  tar --numeric-owner -c -C "$target" . | docker import - $name:$version
+  tar --numeric-owner -c -C img . | docker import - $name:$version
   docker run -i -t --rm $name:$version /bin/bash -c 'echo success'
-  rm -rf "$target"
+  rm -rf img
 
   # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
   cd $HOME
