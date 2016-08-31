@@ -439,7 +439,8 @@ build_hyperledger_core() {
   # Delete fabric directory, if it exists
   rm -rf fabric
   # git clone http://gerrit.hyperledger.org/r/fabric.git
-  git clone https://github.com/hyperledger/fabric.git
+  # git clone https://github.com/hyperledger/fabric.git
+  git clone https://github.com/hyperledger-archives/fabric
 
   # Build the Hyperledger Fabric core components
   if [ $USE_DOCKER_HUB -eq 0 ] || [ $OS_FLAVOR == "sles" ]; then
