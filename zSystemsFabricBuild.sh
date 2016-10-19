@@ -139,22 +139,19 @@ get_machine_type() {
 build_golang() {
   echo -e "\n*** build_golang ***\n"
   cd $HOME
-  mkdir -p $HOME/go
 
   if [ $1 == 'rhel' ] || [ $1 == 'sles' ]; then
-  cat > copygo.sh <<EOF
-cp -ra /usr/local/go /tmp/golang
-cp -ra /usr/local/go /tmp/work
-EOF
+    wget -q https://storage.googleapis.com/golang/go1.7.1.linux-s390x.tar.gz
+    tar -xf go1.7.1.linux-s390x.tar.gz
+    cp -ra go /usr/local
 
-  # Extract the Golang v1.6 compiler directory from the brunswickheads docker image
-  docker run --rm -v $HOME:/tmp/work -v /usr/local:/tmp/golang brunswickheads/openchain-peer bash /tmp/work/copygo.sh
-  export GOROOT=/usr/local/go
-else
-  # Install Golang when running Ubuntu
-  apt-get -y install golang-1.6-go
-  export GOROOT=/usr/lib/go-1.6
-fi
+    export CC=gcc
+    export GOROOT=/usr/local/go
+  else
+    # Install Golang when running Ubuntu
+    apt-get -y install golang-1.6-go
+    export GOROOT=/usr/lib/go-1.6
+  fi
   echo -e "*** DONE ***\n"
 }
 
@@ -413,7 +410,7 @@ EOF
     rm -rf /tmp/$DOCKER_DIR*
 
   else      # Setup Docker for Ubuntu
-    apt-get -y install docker.io
+    apt-get -y install docker.io=1.10.3-0ubuntu6
     systemctl stop docker.service
     sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker
     systemctl start docker.service
@@ -499,6 +496,12 @@ GOROOT=$GOROOT
 GOPATH=$GOPATH
 EOF
 
+  if [ $OS_FLAVOR == "rhel" ] || [ $OS_FLAVOR == "sles" ]; then
+cat <<EOF >>/etc/environment
+CC=gcc
+EOF
+  fi
+
   # Add non-root user to docker group
   BC_USER=`who am i | awk '{print $1}'`
   if [ $BC_USER != "root" ]; then
@@ -508,6 +511,7 @@ EOF
   # Cleanup files and Docker images and containers
   rm -f $HOME/copygo.sh
   rm -f $HOME/get-pip.py
+  rm -f $HOME/go1.7.1.linux-s390x.tar.gz
 
   echo -e "Cleanup Docker artifacts\n"
   # Delete any temporary Docker containers created during the build process
