@@ -251,6 +251,10 @@ build_hyperledger_core() {
   # git clone https://github.com/hyperledger-archives/fabric
   git clone -b debian_s390x_v0.6 https://github.com/vpaprots/fabric.git
 
+  # Pull down docker fabric-baseimage to reduce build time
+  docker pull hyperledger/fabric-baseimage:s390x-0.0.10
+  docker tag hyperledger/fabric-baseimage:s390x-0.0.10 hyperledger/fabric-baseimage:s390x-0.0.11
+
   cd $GOPATH/src/github.com/hyperledger/fabric
   mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
   make peer membersrvc peer-image membersrvc-image
