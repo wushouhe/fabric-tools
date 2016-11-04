@@ -9,13 +9,13 @@ Overview
 
 The files contained in this repository focus on building out the Hyperledger Fabric environment on Linux on z Systems.
 
-For those that are interested in what it takes to build a complete Hyperledger Fabric from scratch, the following documents take you through the manual process of setting up Hyperledger Fabric on your Linux on z Systems instances:
+For those that are interested in what it takes to build a complete Hyperledger Fabric from scratch, the following documents can be found in the *manual-install* branch of this repository.  These documents take you through the manual process of setting up Hyperledger Fabric on your Linux on z Systems instances:
 - build-hyperledgerFabric-for-RHEL-linux-on-z.md
 - build-hyperledgerFabric-for-SLES-linux-on-z.md
 - build-hyperledgerFabric-for-UBUNTU-linux-on-z.md
 
 
-In addition to the manual build documents, a build script is included in this repository that automates the creation of a Hyperledger Fabric environment for Linux on zSystems instances.
+There is a build script is included in this repository that automates the creation of a Hyperledger Fabric environment for Linux on zSystems instances.
 
 Help Information for zSystemsFabricBuild.sh
 -------------------------------------------
