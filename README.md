@@ -15,7 +15,7 @@ For those that are interested in what it takes to build a complete Hyperledger F
 - build-hyperledgerFabric-for-UBUNTU-linux-on-z.md
 
 
-There is a build script is included in this repository that automates the creation of a Hyperledger Fabric environment for Linux on zSystems instances.
+There is a build script included in this repository that automates the creation of a Hyperledger Fabric environment for Linux on zSystems instances.
 
 Help Information for zSystemsFabricBuild.sh
 -------------------------------------------
