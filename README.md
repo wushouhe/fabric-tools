@@ -43,12 +43,7 @@ to build the following components:
     - Docker and supporting Hyperledger Fabric Docker images
     - Golang
     - RocksDB
+    - IBM Java 1.8
+    - Nodejs 6.7.0
     - Hyperledger Fabric core components -- Peer and Membership Services
 
-     Options:
--b   Build the hyperledger/fabric-baseimage. If this option is not specifed,
-     the default action is to pull the hyperledger/fabric-base image from Docker Hub.
-
--c   Rebuild the Hyperledger Fabric components.  A previous installation is
-     required to use this option.
-```
