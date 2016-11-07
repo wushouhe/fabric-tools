@@ -219,6 +219,10 @@ EOF
     systemctl start docker.service
   elif [ $1 == "sles"]; then
     zypper --non-interactive in docker
+    systemctl stop docker.service
+    sed '/^DOCKER_OPTS/ s/\"$/ \-H tcp\:\/\/0\.0\.0\.0\:2375\"/' /etc/sysconfig/docker
+    systemctl enable docker.service
+    systemctl start docker.service
   else      # Setup Docker for Ubuntu
     apt-get -y install docker.io
     systemctl stop docker.service
