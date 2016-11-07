@@ -64,7 +64,7 @@ prereq_sles() {
 prereq_ubuntu() {
   echo -e "\nInstalling Ubuntu prerequisite packages\n"
   apt-get update
-  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools python-dev
+  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools python-dev alien
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -167,7 +167,7 @@ build_rocksdb() {
 
 # Build and install the Docker Daemon
 install_docker() {
-  echo -e "\n*** build_docker ***\n"
+  echo -e "\n*** install_docker ***\n"
 
   # Setup Docker for RHEL or SLES
   if [ $1 == "rhel" ]; then
@@ -195,7 +195,7 @@ install_docker() {
     # Create environment file for the Docker service
     touch /etc/docker/docker.conf
     chmod 664 /etc/docker/docker.conf
-    echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"' >> /etc/docker/docker.conf
+    echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -s overlay"' >> /etc/docker/docker.conf
     touch /etc/systemd/system/docker.service
     chmod 664 /etc/systemd/system/docker.service
 
@@ -246,16 +246,16 @@ build_hyperledger_core() {
   cd $HOME/src/github.com/hyperledger
   # Delete fabric directory, if it exists
   rm -rf fabric
-  # git clone http://gerrit.hyperledger.org/r/fabric.git
-  # git clone https://github.com/hyperledger/fabric.git
-  # git clone https://github.com/hyperledger-archives/fabric
   git clone -b debian_s390x_v0.6 https://github.com/vpaprots/fabric.git
 
   # Pull down docker fabric-baseimage to reduce build time
-  docker pull hyperledger/fabric-baseimage:s390x-0.0.10
-  docker tag hyperledger/fabric-baseimage:s390x-0.0.10 hyperledger/fabric-baseimage:s390x-0.0.11
+  docker pull hyperledger/fabric-baseimage:s390x-0.2.1
+  docker tag hyperledger/fabric-baseimage:s390x-0.2.1 hyperledger/fabric-baseimage:s390x-0.0.11
+  docker rmi hyperledger/fabric-baseimage:s390x-0.2.1
 
   cd $GOPATH/src/github.com/hyperledger/fabric
+  git rm -rf core/chaincode/platforms/java/test
+  git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
   mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
   make peer membersrvc peer-image membersrvc-image
 
@@ -325,18 +325,14 @@ setup_behave() {
   pip install -q -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3 > /dev/null 2>&1
 
   # Install grpcio package for unit tests
-  git clone https://github.com/grpc/grpc.git
-  cd grpc
-  pip install -rrequirements.txt
-  git checkout tags/release-0_13_1
-  sed -i -e "s/boringssl.googlesource.com/github.com\/linux-on-ibm-z/" .gitmodules
-  git submodule sync
-  git submodule update --init
-  cd third_party/boringssl
-  git checkout s390x-big-endian
-  cd ../..
-  GRPC_PYTHON_BUILD_WITH_CYTHON=1 pip install .
-
+  wget http://download.sinenomine.net/OSS/7/s390x/grpcio-1.0.0-1.cl7.s390x.rpm
+  if [ $OS_FLAVOR == 'rhel' ]; then
+    yum -y localinstall grpcio-1.0.0-1.cl7.s390x.rpm
+  elif [ $OS_FLAVOR == 'sles' ]; then
+    zypper --non-interactive --no-gpg-checks install grpcio-1.0.0-1.cl7.s390x.rpm
+  else
+    alien -i grpcio-1.0.0-1.cl7.s390x.rpm
+  fi
   echo -e "*** DONE ***\n"
 }
 
