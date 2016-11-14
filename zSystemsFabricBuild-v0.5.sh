@@ -447,6 +447,8 @@ build_hyperledger_core() {
     sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
   fi
   cd $GOPATH/src/github.com/hyperledger/fabric
+
+  echo "RUN ln -s /usr/bin/gcc /usr/bin/s390x-linux-gnu-gcc" >> images/src/Dockerfile.in
   make peer membersrvc peer-image membersrvc-image
 
   if [ $? != 0 ]; then
