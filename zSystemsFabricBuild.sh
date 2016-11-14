@@ -3,11 +3,9 @@
 # Build out the Hyperledger Fabric environment for Linux on z Systems
 
 # Global Variables
-BUILD_HYPERLEDGER_CORE_ONLY=0
 MACHINE_TYPE=""
 OS_FLAVOR=""
 ROCKSDB_VERSION="4.1"
-USE_DOCKER_HUB=1
 
 usage() {
   cat << EOF
@@ -23,7 +21,7 @@ then login to pick up updates to Hyperledger Fabric specific environment variabl
 
 To run the script:
 sudo su -  (if you currently are not root)
-<path-of-script>/zSystemsFabricBuild.sh options
+<path-of-script>/zSystemsFabricBuild.sh
 
 NOTE: Prerequisite packages are required to build and use RocksDB which may not
 reside in your default package management repositories.  There is the possibility
@@ -34,14 +32,9 @@ to build the following components:
     - Docker and supporting Hyperledger Fabric Docker images
     - Golang
     - RocksDB
+    - IBM Java 1.8
+    - Nodejs 6.7.0
     - Hyperledger Fabric core components -- Peer and Membership Services
-
-     Options:
--b   Build the hyperledger/fabric-baseimage. If this option is not specifed,
-     the default action is to pull the hyperledger/fabric-base image from Docker Hub.
-
--c   Rebuild the Hyperledger Fabric components.  A previous installation is
-     required to use this option.
 
 EOF
   exit 1
@@ -50,7 +43,7 @@ EOF
 # Install prerequisite packages for an RHEL Hyperledger build
 prereq_rhel() {
   echo -e "\nInstalling RHEL prerequisite packages\n"
-  yum -y -q install git gcc gcc-c++ snappy-devel zlib-devel bzip2-devel git wget tar python-setuptools device-mapper
+  yum -y -q install git gcc gcc-c++ snappy-devel zlib-devel bzip2-devel git wget tar python-setuptools python-devel device-mapper
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -60,7 +53,7 @@ prereq_rhel() {
 # Install prerequisite packages for an SLES Hyperledger build
 prereq_sles() {
   echo -e "\nInstalling SLES prerequisite packages\n"
-  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel python-setuptools
+  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel python-setuptools python-devel
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -71,7 +64,7 @@ prereq_sles() {
 prereq_ubuntu() {
   echo -e "\nInstalling Ubuntu prerequisite packages\n"
   apt-get update
-  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools
+  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools python-dev alien
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -138,30 +131,26 @@ get_machine_type() {
 # Install the Golang compiler for the s390x platform
 build_golang() {
   echo -e "\n*** build_golang ***\n"
-  cd $HOME
-
-  if [ $1 == 'rhel' ] || [ $1 == 'sles' ]; then
-    wget -q https://storage.googleapis.com/golang/go1.7.1.linux-s390x.tar.gz
-    tar -xf go1.7.1.linux-s390x.tar.gz
-    cp -ra go /usr/local
-
-    export CC=gcc
-    export GOROOT=/usr/local/go
-  else
-    # Install Golang when running Ubuntu
-    apt-get -y install golang-1.6-go
-    export GOROOT=/usr/lib/go-1.6
-  fi
+  cd /tmp
+  wget --quiet --no-check-certificate https://storage.googleapis.com/golang/go1.7.1.linux-s390x.tar.gz
+  tar -xvf go1.7.1.linux-s390x.tar.gz
+  cd /opt
+  git clone http://github.com/linux-on-ibm-z/go.git go
+  cd go/src
+  git checkout release-branch.go1.6-p256
+  export GOROOT_BOOTSTRAP=/tmp/go
+  ./make.bash
+  export GOROOT="/opt/go"
   echo -e "*** DONE ***\n"
 }
 
 # Build and install the RocksDB database component
 build_rocksdb() {
   echo -e "\n*** build_rocksdb ***\n"
-  cd $HOME
+  cd /tmp
 
-  if [ -d $HOME/rocksdb ]; then
-    rm -rf $HOME/rocksdb
+  if [ -d /tmp/rocksdb ]; then
+    rm -rf /tmp/rocksdb
   fi
 
   git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git
@@ -176,193 +165,14 @@ build_rocksdb() {
   echo -e "*** DONE ***\n"
 }
 
-# Build a base hyperledger/fabric-baseimage for RHEL
-docker_base_image_rhel() {
-  name="rhelbase"
-
-  mkdir img || exit
-  mkdir -m 755 img/dev
-  mknod -m 600 img/dev/console c 5 1
-  mknod -m 600 img/dev/initctl p
-  mknod -m 666 img/dev/full c 1 7
-  mknod -m 666 img/dev/null c 1 3
-  mknod -m 666 img/dev/ptmx c 5 2
-  mknod -m 666 img/dev/random c 1 8
-  mknod -m 666 img/dev/tty c 5 0
-  mknod -m 666 img/dev/tty0 c 4 0
-  mknod -m 666 img/dev/urandom c 1 9
-  mknod -m 666 img/dev/zero c 1 5
-
-  test -d /etc/yum && yum --installroot=$PWD/img --releasever=/ --setopt=tsflags=nodocs \
-  --setopt=group_package_types=mandatory -y install bash yum vim-minimal
-  test -d /etc/yum && cp -a /etc/yum* /etc/rhsm/* /etc/pki/* img/etc/
-  test -d /etc/yum && yum --installroot=$PWD/img clean all
-
-  # in some cases the following line is needed. I still have not understood, why...
-  # test -d /etc/zypp && mkdir img/etc && cp -a /etc/zypp* /etc/products.d img/etc/
-  test -d /etc/zypp && zypper --root $PWD/img  -D /etc/zypp/repos.d/ \
-  --no-gpg-checks -n install -l bash zypper vim
-  test -d /etc/zypp && cp -a /etc/zypp* /etc/products.d img/etc/
-
-  rm -fr img/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
-  rm -fr img/usr/share/{man,doc,info,gnome/help}
-  rm -fr img/usr/share/cracklib
-  rm -fr img/usr/share/i18n
-  rm -fr img/etc/ld.so.cache
-  rm -fr img/var/cache/ldconfig/*
-
-  version=`grep "VERSION_ID=" img/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
-
-  if [ -z "$version" ]; then
-      echo >&2 "warning: cannot autodetect OS version, using '$name' as tag"
-      version=$name
-  fi
-
-  # Create base SLES Docker image
-  tar --numeric-owner -c -C img . | docker import - $name:$version
-  docker run -i -t --rm $name:$version /bin/bash -c 'echo success'
-  rm -rf img
-
-  # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
-  cd $HOME
-  cat > Dockerfile <<EOF
-FROM rhelbase:$version
-RUN yum -y install gcc gcc-c++ make git snappy-devel zlib-devel bzip2-devel
-# Install Golang
-COPY go /usr/local/go
-ENV GOROOT=/usr/local/go
-# Install RocksDB
-COPY rocksdb /tmp/rocksdb
-WORKDIR /tmp/rocksdb
-RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-ENV GOPATH=/opt/gopath
-ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
-EOF
-
-  # Build hyperledger/fabric-baseimage
-  docker build -t hyperledger/fabric-baseimage -f $HOME/Dockerfile $HOME
-  if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Docker image: hyperledger/fabric-baseimage.\n"
-    exit 1
-  fi
-}
-
-# Build a base hyperledger/fabric-baseimage for SLES
-docker_base_image_sles() {
-  name="slesbase"
-
-  mkdir img || exit
-  mkdir -m 755 img/dev
-  mknod -m 600 img/dev/console c 5 1
-  mknod -m 600 img/dev/initctl p
-  mknod -m 666 img/dev/full c 1 7
-  mknod -m 666 img/dev/null c 1 3
-  mknod -m 666 img/dev/ptmx c 5 2
-  mknod -m 666 img/dev/random c 1 8
-  mknod -m 666 img/dev/tty c 5 0
-  mknod -m 666 img/dev/tty0 c 4 0
-  mknod -m 666 img/dev/urandom c 1 9
-  mknod -m 666 img/dev/zero c 1 5
-
-  test -d /etc/yum && yum --installroot=$PWD/img --releasever=/ --setopt=tsflags=nodocs \
-  --setopt=group_package_types=mandatory -y install bash yum vim-minimal
-  test -d /etc/yum && cp -a /etc/yum* /etc/rhsm/* /etc/pki/* img/etc/
-  test -d /etc/yum && yum --installroot=$PWD/img clean all
-
-  # in some cases the following line is needed. I still have not understood, why...
-  test -d /etc/zypp && mkdir img/etc && cp -a /etc/zypp* /etc/products.d img/etc/
-  test -d /etc/zypp && zypper --root $PWD/img  -D /etc/zypp/repos.d/ \
-  --no-gpg-checks -n install -l bash zypper vim
-  test -d /etc/zypp && cp -a /etc/zypp* /etc/products.d img/etc/
-
-  rm -fr img/usr/{{lib,share}/locale,{lib,lib64}/gconv,bin/localedef,sbin/build-locale-archive}
-  rm -fr img/usr/share/{man,doc,info,gnome/help}
-  rm -fr img/usr/share/cracklib
-  rm -fr img/usr/share/i18n
-  rm -fr img/etc/ld.so.cache
-  rm -fr img/var/cache/ldconfig/*
-
-  version=`grep "VERSION_ID=" img/etc/os-release | sed 's/\"//g' | awk -F= '{print $2}'`
-
-  if [ -z "$version" ]; then
-    echo >&2 "warning: cannot autodetect OS version, using '$name' as tag"
-    version=$name
-  fi
-
-  # Create base SLES Docker image
-  tar --numeric-owner -c -C img . | docker import - $name:$version
-  docker run -i -t --rm $name:$version /bin/bash -c 'echo success'
-  rm -rf img
-
-  # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
-  cd $HOME
-  cat > Dockerfile <<EOF
-FROM slesbase:$version
-RUN zypper --non-interactive --no-gpg-check in gcc gcc-c++ make git-core zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel
-# Install Golang
-COPY go /usr/local/go
-ENV GOROOT=/usr/local/go
-# Install RocksDB
-COPY rocksdb /tmp/rocksdb
-WORKDIR /tmp/rocksdb
-RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-ENV GOPATH=/opt/gopath
-ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
-EOF
-
-  # Build hyperledger/fabric-baseimage
-  docker build -t hyperledger/fabric-baseimage -f $HOME/Dockerfile $HOME
-  if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Docker image: hyperledger/fabric-baseimage.\n"
-    exit 1
-  fi
-}
-
-docker_base_image_ubuntu() {
-  cd $HOME
-  debootstrap xenial ubuntu-base > /dev/null
-  cp /etc/apt/sources.list $HOME/ubuntu-base/etc/apt/
-  tar -C ubuntu-base -c . | docker import - ubuntu-base
-
-  # Create Dockerfile for creating the hyperledger/fabric-baseimage Docker image
-  cd $HOME
-  cat > Dockerfile <<EOF
-FROM ubuntu-base:latest
-RUN apt-get update
-RUN apt-get -y install build-essential git golang-1.6-go gcc g++ make libbz2-dev zlib1g-dev libsnappy-dev libgflags-dev
-ENV GOROOT=/usr/lib/go-1.6
-# Install RocksDB
-COPY rocksdb /tmp/rocksdb
-WORKDIR /tmp/rocksdb
-RUN INSTALL_PATH=/usr make install-shared && ldconfig && rm -rf /tmp/rocksdb
-ENV GOPATH=/opt/gopath
-ENV PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
-EOF
-
-  # Build hyperledger/fabric-baseimage
-  docker build -t hyperledger/fabric-baseimage -f $HOME/Dockerfile $HOME
-  if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Docker image: hyperledger/fabric-baseimage.\n"
-    exit 1
-  fi
-}
-
 # Build and install the Docker Daemon
-build_docker() {
-  echo -e "\n*** build_docker ***\n"
+install_docker() {
+  echo -e "\n*** install_docker ***\n"
 
   # Setup Docker for RHEL or SLES
-  if [ $1 == "rhel" ] || [ $1 == "sles" ]; then
-    case $1 in
-      rhel)
-        DOCKER_URL="ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.2/docker-1.10.1-rhel7.2-20160408.tar.gz"
-        DOCKER_DIR="docker-1.10.1-rhel7.2-20160408"
-        ;;
-      sles)
-        DOCKER_URL="ftp://ftp.unicamp.br/pub/linuxpatch/s390x/suse/sles12/docker/docker-1.9.1-sles12-20151127.tar.gz"
-        DOCKER_DIR="docker-1.9.1-sles12-20151127"
-       ;;
-    esac
+  if [ $1 == "rhel" ]; then
+    DOCKER_URL="ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.2/docker-1.11.2-rhel7.2-20160623.tar.gz"
+    DOCKER_DIR="docker-1.11.2-rhel7.2-20160623"
 
     # Install Docker
     cd /tmp
@@ -375,7 +185,7 @@ build_docker() {
     if [ -f /usr/bin/docker ]; then
       mv /usr/bin/docker /usr/bin/docker.orig
     fi
-    cp $DOCKER_DIR/docker /usr/bin
+    cp $DOCKER_DIR/docker* /usr/bin
 
     # Setup Docker Daemon service
     if [ ! -d /etc/docker ]; then
@@ -385,7 +195,7 @@ build_docker() {
     # Create environment file for the Docker service
     touch /etc/docker/docker.conf
     chmod 664 /etc/docker/docker.conf
-    echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"' >> /etc/docker/docker.conf
+    echo 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -s overlay"' >> /etc/docker/docker.conf
     touch /etc/systemd/system/docker.service
     chmod 664 /etc/systemd/system/docker.service
 
@@ -405,14 +215,19 @@ WantedBy=default.target
 EOF
     # Start Docker Daemon
     systemctl daemon-reload
+    systemctl enable docker.service
     systemctl start docker.service
-
-    rm -rf /tmp/$DOCKER_DIR*
-
+  elif [ $1 == "sles" ]; then
+    zypper --non-interactive in docker
+    systemctl stop docker.service
+    sed -i '/^DOCKER_OPTS/ s/\"$/ \-H tcp\:\/\/0\.0\.0\.0\:2375\"/' /etc/sysconfig/docker
+    systemctl enable docker.service
+    systemctl start docker.service
   else      # Setup Docker for Ubuntu
-    apt-get -y install docker.io=1.10.3-0ubuntu6
+    apt-get -y install docker.io
     systemctl stop docker.service
     sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker
+    systemctl enable docker.service
     systemctl start docker.service
   fi
 
@@ -435,18 +250,17 @@ build_hyperledger_core() {
   cd $HOME/src/github.com/hyperledger
   # Delete fabric directory, if it exists
   rm -rf fabric
-  # git clone http://gerrit.hyperledger.org/r/fabric.git
-  # git clone https://github.com/hyperledger/fabric.git
-  git clone https://github.com/hyperledger-archives/fabric
+  git clone -b debian_s390x_v0.6 https://github.com/vpaprots/fabric.git
 
-  # Build the Hyperledger Fabric core components
-  if [ $USE_DOCKER_HUB -eq 0 ] || [ $OS_FLAVOR == "sles" ]; then
-    docker_base_image_$1
-    # Update the Makefile to allow make to run for
-    # installations that created their own Docker base images.
-    sed -i "/docker\.sh/d" $GOPATH/src/github.com/hyperledger/fabric/Makefile
-  fi
+  # Pull down docker fabric-baseimage to reduce build time
+  docker pull hyperledger/fabric-baseimage:s390x-0.2.1
+  docker tag hyperledger/fabric-baseimage:s390x-0.2.1 hyperledger/fabric-baseimage:s390x-0.0.11
+  docker rmi hyperledger/fabric-baseimage:s390x-0.2.1
+
   cd $GOPATH/src/github.com/hyperledger/fabric
+  git rm -rf core/chaincode/platforms/java/test
+  git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
+  mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
   make peer membersrvc peer-image membersrvc-image
 
   if [ $? != 0 ]; then
@@ -457,26 +271,72 @@ build_hyperledger_core() {
   echo -e "*** DONE ***\n"
 }
 
+# Install IBM Java 1.8
+install_java() {
+  echo -e "\n*** install_java ***\n"
+  JAVA_VERSION=1.8.0_sr3fp12
+  ESUM_s390x="46766ac01bc2b7d2f3814b6b1561e2d06c7d92862192b313af6e2f77ce86d849"
+  ESUM_ppc64le="6fb86f2188562a56d4f5621a272e2cab1ec3d61a13b80dec9dc958e9568d9892"
+  eval ESUM=\$ESUM_s390x
+  BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/"
+  YML_FILE="sdk/linux/s390x/index.yml"
+  wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml $BASE_URL/$YML_FILE
+  JAVA_URL=$(cat /tmp/index.yml | sed -n '/'$JAVA_VERSION'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r')
+  wget -q -U UA_IBM_JAVA_Docker -O /tmp/ibm-java.bin $JAVA_URL
+  echo "$ESUM  /tmp/ibm-java.bin" | sha256sum -c -
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Java image digests do not match.\n Unable to build the Hyperledger Fabric components.\n"
+    exit 1
+  fi
+  echo "INSTALLER_UI=silent" > /tmp/response.properties
+  echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties
+  echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties
+  mkdir -p /opt/ibm
+  chmod +x /tmp/ibm-java.bin
+  /tmp/ibm-java.bin -i silent -f /tmp/response.properties
+  ln -s /opt/ibm/java/jre/bin/* /usr/local/bin/
+  echo -e "*** DONE ***\n"
+}
+
+# Install Nodejs
+install_nodejs() {
+  echo -e "\n*** install_nodejs ***\n"
+  cd /tmp
+  wget -q https://nodejs.org/dist/v6.7.0/node-v6.7.0-linux-s390x.tar.gz
+  cd /usr/local && tar --strip-components 1 -xzf /tmp/node-v6.7.0-linux-s390x.tar.gz
+  echo -e "*** DONE ***\n"
+}
+
 # Install Behave and its pre-requisites.  Firewall rules are also set.
 setup_behave() {
   echo -e "\n*** setup_behave ***\n"
   # Setup Firewall Rules if they don't already exist
   grep -q '2375' <<< `iptables -L INPUT -nv`
   if [ $? != 0 ]; then
-    iptables -I INPUT 1 -p tcp --dport 30303 -j ACCEPT
-    iptables -I INPUT 1 -p tcp --dport 50051 -j ACCEPT
-    iptables -I INPUT 1 -p tcp --dport 5000 -j ACCEPT
+    iptables -I INPUT 1 -p tcp --dport 7050 -j ACCEPT
+    iptables -I INPUT 1 -p tcp --dport 7051 -j ACCEPT
+    iptables -I INPUT 1 -p tcp --dport 7053 -j ACCEPT
+    iptables -I INPUT 1 -p tcp --dport 7054 -j ACCEPT
     iptables -I INPUT 1 -i docker0 -p tcp --dport 2375 -j ACCEPT
   fi
 
   # Install Behave Tests Pre-Reqs
-  cd $HOME
+  cd /tmp
   curl -s "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
   python get-pip.py > /dev/null 2>&1
   pip install -q --upgrade pip > /dev/null 2>&1
   pip install -q behave nose docker-compose > /dev/null 2>&1
   pip install -q -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3 > /dev/null 2>&1
 
+  # Install grpcio package for unit tests
+  wget http://download.sinenomine.net/OSS/7/s390x/grpcio-1.0.0-1.cl7.s390x.rpm
+  if [ $OS_FLAVOR == 'rhel' ]; then
+    yum -y localinstall grpcio-1.0.0-1.cl7.s390x.rpm
+  elif [ $OS_FLAVOR == 'sles' ]; then
+    zypper --non-interactive --no-gpg-checks install grpcio-1.0.0-1.cl7.s390x.rpm
+  else
+    alien -i grpcio-1.0.0-1.cl7.s390x.rpm
+  fi
   echo -e "*** DONE ***\n"
 }
 
@@ -488,7 +348,7 @@ post_build() {
 cat <<EOF >/etc/profile.d/goroot.sh
 export GOROOT=$GOROOT
 export GOPATH=$GOPATH
-export PATH=\$PATH:$GOROOT/bin:$GOPATH/bin
+export PATH=\$PATH:$GOROOT/bin:$GOPATH/bin:/usr/local/bin
 EOF
 
 cat <<EOF >>/etc/environment
@@ -509,20 +369,12 @@ EOF
   fi
 
   # Cleanup files and Docker images and containers
-  rm -f $HOME/copygo.sh
-  rm -f $HOME/get-pip.py
-  rm -f $HOME/go1.7.1.linux-s390x.tar.gz
+  rm -rf /tmp/*
 
   echo -e "Cleanup Docker artifacts\n"
   # Delete any temporary Docker containers created during the build process
   if [[ ! -z $(docker ps -aq) ]]; then
       docker rm -f $(docker ps -aq)
-  fi
-
-  # Delete the temporary Docker image created during the build process
-  docker images | grep "brunswick"
-  if [ $?  == 0 ]; then
-      docker rmi brunswickheads/openchain-peer
   fi
 
   echo -e "*** DONE ***\n"
@@ -543,51 +395,17 @@ if [ xroot != x$(whoami) ]; then
   exit 1
 fi
 
-# Process script arguments
-while getopts ":bc" opt; do
-  case $opt in
-    b)
-      USE_DOCKER_HUB=0
-      ;;
-    c)
-      BUILD_HYPERLEDGER_CORE_ONLY=1
-      ;;
-  \?)
-    echo "Invalid option: -$OPTARG" >&2
-    exit 1
-    ;;
-  *)
-    usage
-    ;;
- esac
-done
-
 # Determine s390x environment
 get_linux_flavor      # Determine Linux distribution
 get_machine_type      # Determine IBM z Systems machine type
-
-# Main build routines
-if [ $BUILD_HYPERLEDGER_CORE_ONLY -eq 1 ]; then
-  if [ -f /usr/bin/docker ] && [ -f /usr/lib/librocksdb.so.${ROCKSDB_VERSION} ] && [[ -f /usr/local/go/bin/go || -f /usr/lib/go-1.6/bin/go ]]; then
-    # Install pre-reqs for detected Linux OS Distribution
-    prereq_$OS_FLAVOR
-    if [ $? != 0 ]; then
-      echo -e "\nERROR: Unable to install pre-requisite packages.\n"
-      exit 1
-    fi
-    build_hyperledger_core $OS_FLAVOR
-    exit 0
-  else
-    echo -e "\nThe Hyperledger core cannot be built.\nDocker, RocksDB, and Go must be installed prior to building the Hyperledger core components.\n"
-    exit 1
-  fi
-fi
 
 # Install pre-reqs for detected Linux OS Distribution
 prereq_$OS_FLAVOR
 
 # Default action is to build all components for the Hyperledger Fabric environment
-build_docker $OS_FLAVOR
+install_java
+install_nodejs
+install_docker $OS_FLAVOR
 build_golang $OS_FLAVOR
 build_rocksdb
 build_hyperledger_core $OS_FLAVOR
