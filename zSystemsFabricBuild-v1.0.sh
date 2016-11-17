@@ -224,6 +224,7 @@ EOF
     systemctl enable docker.service
     systemctl start docker.service
   else      # Setup Docker for Ubuntu
+    groupdel docker
     apt-get -y install docker.io
     systemctl stop docker.service
     sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker

@@ -224,6 +224,7 @@ EOF
     systemctl enable docker.service
     systemctl start docker.service
   else      # Setup Docker for Ubuntu
+    groupdel docker
     apt-get -y install docker.io
     systemctl stop docker.service
     sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker
@@ -261,6 +262,7 @@ build_hyperledger_core() {
   git rm -rf core/chaincode/platforms/java/test
   git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
   mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
+  sed -i 's/RUN chaintool buildcar/RUN java -jar \/usr\/local\/bin\/chaintool buildcar/g' core/chaincode/platforms/car/package.go
   make peer membersrvc peer-image membersrvc-image
 
   if [ $? != 0 ]; then
