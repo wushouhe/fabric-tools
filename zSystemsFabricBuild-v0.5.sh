@@ -410,6 +410,7 @@ EOF
     rm -rf /tmp/$DOCKER_DIR*
 
   else      # Setup Docker for Ubuntu
+    groupdel docker
     apt-get -y install docker.io=1.10.3-0ubuntu6
     systemctl stop docker.service
     sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker
