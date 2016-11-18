@@ -449,7 +449,7 @@ build_hyperledger_core() {
   fi
   cd $GOPATH/src/github.com/hyperledger/fabric
 
-  if [ OS_FLAVOR == "sles" ]; then
+  if [ $OS_FLAVOR == "sles" ]; then
    echo "RUN ln -s /usr/bin/gcc /usr/bin/s390x-linux-gnu-gcc" >> images/src/Dockerfile.in
   fi
   make peer membersrvc peer-image membersrvc-image
