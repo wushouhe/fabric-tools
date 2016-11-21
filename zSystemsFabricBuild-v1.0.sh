@@ -257,7 +257,6 @@ build_hyperledger_core() {
   git rm -rf core/chaincode/platforms/java/test
   git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
   mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
-  sed -i 's/RUN chaintool buildcar/RUN java -jar \/usr\/local\/bin\/chaintool buildcar/g' core/chaincode/platforms/car/package.go
   make peer images
 
   if [ $? != 0 ]; then
