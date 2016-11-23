@@ -310,6 +310,7 @@ setup_behave() {
   # Setup Firewall Rules if they don't already exist
   grep -q '2375' <<< `iptables -L INPUT -nv`
   if [ $? != 0 ]; then
+    iptables -I INPUT 1 -p tcp --dport 21212 -j ACCEPT
     iptables -I INPUT 1 -p tcp --dport 7050 -j ACCEPT
     iptables -I INPUT 1 -p tcp --dport 7051 -j ACCEPT
     iptables -I INPUT 1 -p tcp --dport 7053 -j ACCEPT
