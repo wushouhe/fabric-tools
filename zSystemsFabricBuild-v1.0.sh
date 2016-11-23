@@ -256,8 +256,9 @@ build_hyperledger_core() {
   cd $GOPATH/src/github.com/hyperledger/fabric
   git rm -rf core/chaincode/platforms/java/test
   git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
-  mkdir -p build/image/javaenv && touch build/image/javaenv/.dummy
-  make peer images
+  sed -i 's/IMAGES = peer orderer ccenv javaenv/IMAGES = peer orderer ccenv/' Makefile
+  sed -i 's/build\/image\/javaenv\/.dummy//' Makefile
+  make native docker
 
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to build the Hyperledger Fabric components.\n"
