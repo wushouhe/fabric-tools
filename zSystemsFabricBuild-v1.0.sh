@@ -259,7 +259,7 @@ setup_behave() {
   git checkout s390x-big-endian
   cd ../..
   GRPC_PYTHON_BUILD_WITH_CYTHON=1 pip install .
-
+  echo -e "*** DONE ***\n"
 }
 
 # Update profile with environment variables required for Hyperledger Fabric use
