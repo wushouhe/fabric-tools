@@ -3,9 +3,8 @@
 # Build out the Hyperledger Fabric environment for Linux on z Systems
 
 # Global Variables
-MACHINE_TYPE=""
 OS_FLAVOR=""
-ROCKSDB_VERSION="4.1"
+GO_VER="1.7.3"
 
 usage() {
   cat << EOF
@@ -15,26 +14,20 @@ Usage:  `basename $0` options
 This script installs and configures a Hyperledger Fabric environment on a Linux on
 IBM z Systems instance.  The execution of this script assumes that you are starting
 from a new Linux on z Systems instance.  The script will autodetect the Linux
-distribution (currently RHEL, SLES, and Ubuntu) as well as the z Systems machine
-type, and build out the necessary components.  After running this script, logout and
-then login to pick up updates to Hyperledger Fabric specific environment variables.
+distribution (currently RHEL, SLES, and Ubuntu) and build out the necessary components.
+After running this script, logout and then login to pick up updates to
+Hyperledger Fabric specific environment variables.
 
 To run the script:
 sudo su -  (if you currently are not root)
-<path-of-script>/zSystemsFabricBuild.sh
+<path-of-script>/zSystemsFabricBuild-v1.0.sh
 
-NOTE: Prerequisite packages are required to build and use RocksDB which may not
-reside in your default package management repositories.  There is the possibility
-that extra steps might be needed to add the additional repositories to your system.
-
-The default action of the script -- without any arguments -- is
-to build the following components:
+The script will install the following components:
     - Docker and supporting Hyperledger Fabric Docker images
     - Golang
-    - RocksDB
     - IBM Java 1.8
     - Nodejs 6.7.0
-    - Hyperledger Fabric core components -- Peer and Membership Services
+    - Hyperledger Fabric core components
 
 EOF
   exit 1
@@ -43,7 +36,7 @@ EOF
 # Install prerequisite packages for an RHEL Hyperledger build
 prereq_rhel() {
   echo -e "\nInstalling RHEL prerequisite packages\n"
-  yum -y -q install git gcc gcc-c++ snappy-devel zlib-devel bzip2-devel git wget tar python-setuptools python-devel device-mapper
+  yum -y -q install git gcc gcc-c++ wget tar python-setuptools python-devel device-mapper
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -53,7 +46,7 @@ prereq_rhel() {
 # Install prerequisite packages for an SLES Hyperledger build
 prereq_sles() {
   echo -e "\nInstalling SLES prerequisite packages\n"
-  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor zlib zlib-devel libsnappy1 snappy-devel libbz2-1 libbz2-devel python-setuptools python-devel
+  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor  python-setuptools python-devel
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -64,7 +57,7 @@ prereq_sles() {
 prereq_ubuntu() {
   echo -e "\nInstalling Ubuntu prerequisite packages\n"
   apt-get update
-  apt-get -y install build-essential git libsnappy-dev zlib1g-dev libbz2-dev debootstrap python-setuptools python-dev alien
+  apt-get -y install build-essential git debootstrap python-setuptools python-dev alien
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -85,84 +78,6 @@ get_linux_flavor() {
     echo -e "\nERROR: Unsupported Linux Operating System.\n"
     exit 1
   fi
-}
-
-# Extract z Systems machine type for compiling RocksDB
-get_machine_type() {
-  if [ $(uname -m) == "s390x" ]; then
-    MACHINE_TYPE=`cat /proc/cpuinfo | grep -i -m 1 'machine' | awk -F "= " '{print $4}'`
-    case $MACHINE_TYPE in
-      2817)
-      MACHINE_TYPE="z196"
-      ;;
-      2818)
-      MACHINE_TYPE="z196"
-      ;;
-      2827)
-      MACHINE_TYPE="zEC12"
-      ;;
-      2828)
-      MACHINE_TYPE="zEC12"
-      ;;
-      2964)
-      if [ $OS_FLAVOR == 'ubuntu' ]; then
-        MACHINE_TYPE="z13"
-      else
-        MACHINE_TYPE="zEC12"
-      fi
-      ;;
-      2965)
-      if [ $OS_FLAVOR == 'ubuntu' ]; then
-        MACHINE_TYPE="z13"
-      else
-        MACHINE_TYPE="zEC12"
-      fi
-      ;;
-      *)
-      echo -e "\nERROR: Unknown machine architecture.\n"
-      exit 1
-    esac
-  else
-    echo -e '\nERROR: Incorrect platform.  This script can only run on the s390x platform.\n'
-    exit 1
-  fi
-}
-
-# Install the Golang compiler for the s390x platform
-build_golang() {
-  echo -e "\n*** build_golang ***\n"
-  cd /tmp
-  wget --quiet --no-check-certificate https://storage.googleapis.com/golang/go1.7.1.linux-s390x.tar.gz
-  tar -xvf go1.7.1.linux-s390x.tar.gz
-  cd /opt
-  git clone http://github.com/linux-on-ibm-z/go.git go
-  cd go/src
-  git checkout release-branch.go1.6-p256
-  export GOROOT_BOOTSTRAP=/tmp/go
-  ./make.bash
-  export GOROOT="/opt/go"
-  echo -e "*** DONE ***\n"
-}
-
-# Build and install the RocksDB database component
-build_rocksdb() {
-  echo -e "\n*** build_rocksdb ***\n"
-  cd /tmp
-
-  if [ -d /tmp/rocksdb ]; then
-    rm -rf /tmp/rocksdb
-  fi
-
-  git clone --branch v${ROCKSDB_VERSION} --single-branch --depth 1 https://github.com/facebook/rocksdb.git
-  cd  rocksdb
-  sed -i "s/-march=native/-march=$MACHINE_TYPE/" build_tools/build_detect_platform
-  sed -i "s/-momit-leaf-frame-pointer/-DDUMBDUMMY/" Makefile
-  make shared_lib && INSTALL_PATH=/usr make install-shared && ldconfig
-  if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the RocksDB shared library.\n"
-    exit 1
-  fi
-  echo -e "*** DONE ***\n"
 }
 
 # Build and install the Docker Daemon
@@ -224,10 +139,9 @@ EOF
     systemctl enable docker.service
     systemctl start docker.service
   else      # Setup Docker for Ubuntu
-    groupdel docker
     apt-get -y install docker.io
     systemctl stop docker.service
-    sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375\"" /etc/default/docker
+    sed -i "\$aDOCKER_OPTS=\"-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock\"" /etc/default/docker
     systemctl enable docker.service
     systemctl start docker.service
   fi
@@ -235,29 +149,35 @@ EOF
   echo -e "*** DONE ***\n"
 }
 
-# Build the Hyperledger Fabric peer and membership services components
+# Install the Golang compiler for the s390x platform
+install_golang() {
+  echo -e "\n*** install_golang ***\n"
+  export GOROOT="/opt/go"
+  cd /tmp
+  wget --quiet --no-check-certificate https://storage.googleapis.com/golang/go${GO_VER}.linux-s390x.tar.gz
+  tar -xvf go${GO_VER}.linux-s390x.tar.gz
+  mv go /opt
+  chmod 775 /opt/go
+  echo -e "*** DONE ***\n"
+}
+
+# Build the Hyperledger Fabric peer components
 build_hyperledger_core() {
   echo -e "\n*** build_hyperledger_core ***\n"
   # Setup Environment Variables
-  export GOPATH=$HOME
-  export CGO_LDFLAGS="-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy"
-  export CGO_CFLAGS=" "
+  export GOPATH=$HOME/git
   export PATH=$GOROOT/bin:$PATH
 
   # Download latest Hyperledger Fabric codebase
-  if [ ! -d $HOME/src/github.com/hyperledger ]; then
-    mkdir -p $HOME/src/github.com/hyperledger
+  if [ ! -d $GOPATH/src/github.com/hyperledger ]; then
+    mkdir -p $GOPATH/src/github.com/hyperledger
   fi
-  cd $HOME/src/github.com/hyperledger
+  cd $GOPATH/src/github.com/hyperledger
   # Delete fabric directory, if it exists
   rm -rf fabric
   git clone http://gerrit.hyperledger.org/r/fabric
 
   cd $GOPATH/src/github.com/hyperledger/fabric
-  git rm -rf core/chaincode/platforms/java/test
-  git -c user.email="name@email.com" -c user.name="Name" commit -am 'Remove test'
-  sed -i 's/IMAGES = peer orderer ccenv javaenv/IMAGES = peer orderer ccenv/' Makefile
-  sed -i 's/build\/image\/javaenv\/.dummy//' Makefile
   make native docker
 
   if [ $? != 0 ]; then
@@ -325,17 +245,21 @@ setup_behave() {
   pip install -q --upgrade pip > /dev/null 2>&1
   pip install -q behave nose docker-compose > /dev/null 2>&1
   pip install -q -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3 > /dev/null 2>&1
+  pip uninstall -yq six==1.3.0 > /dev/null 2>&1
 
-  # Install grpcio package for unit tests
-  wget http://download.sinenomine.net/OSS/7/s390x/grpcio-1.0.0-1.cl7.s390x.rpm
-  if [ $OS_FLAVOR == 'rhel' ]; then
-    yum -y localinstall grpcio-1.0.0-1.cl7.s390x.rpm
-  elif [ $OS_FLAVOR == 'sles' ]; then
-    zypper --non-interactive --no-gpg-checks install grpcio-1.0.0-1.cl7.s390x.rpm
-  else
-    alien -i grpcio-1.0.0-1.cl7.s390x.rpm
-  fi
-  echo -e "*** DONE ***\n"
+  # INstall protobuf and grpcio
+  git clone https://github.com/grpc/grpc.git
+  cd grpc
+  pip install -rrequirements.txt
+  git checkout tags/release-0_13_1
+  sed -i -e "s/boringssl.googlesource.com/github.com\/linux-on-ibm-z/" .gitmodules
+  git submodule sync
+  git submodule update --init
+  cd third_party/boringssl
+  git checkout s390x-big-endian
+  cd ../..
+  GRPC_PYTHON_BUILD_WITH_CYTHON=1 pip install .
+
 }
 
 # Update profile with environment variables required for Hyperledger Fabric use
@@ -343,6 +267,7 @@ setup_behave() {
 post_build() {
   echo -e "\n*** post_build ***\n"
 
+  if ! test -e /etc/profile.d/goroot.sh; then
 cat <<EOF >/etc/profile.d/goroot.sh
 export GOROOT=$GOROOT
 export GOPATH=$GOPATH
@@ -354,10 +279,15 @@ GOROOT=$GOROOT
 GOPATH=$GOPATH
 EOF
 
-  if [ $OS_FLAVOR == "rhel" ] || [ $OS_FLAVOR == "sles" ]; then
+    if [ $OS_FLAVOR == "rhel" ] || [ $OS_FLAVOR == "sles" ]; then
 cat <<EOF >>/etc/environment
 CC=gcc
 EOF
+    fi
+  fi
+
+  if [ $OS_FLAVOR == "ubuntu" ]; then
+    apt -y autoremove
   fi
 
   # Add non-root user to docker group
@@ -393,21 +323,37 @@ if [ xroot != x$(whoami) ]; then
   exit 1
 fi
 
-# Determine s390x environment
-get_linux_flavor      # Determine Linux distribution
-get_machine_type      # Determine IBM z Systems machine type
+# Determine Linux distribution
+get_linux_flavor
 
 # Install pre-reqs for detected Linux OS Distribution
 prereq_$OS_FLAVOR
 
 # Default action is to build all components for the Hyperledger Fabric environment
-install_java
-install_nodejs
-install_docker $OS_FLAVOR
-build_golang $OS_FLAVOR
-build_rocksdb
+if ! java -version > /dev/null 2>&1; then
+  install_java
+fi
+
+if ! node -v > /dev/null 2>&1; then
+  install_nodejs
+fi
+
+if ! docker images > /dev/null 2>&1; then
+  install_docker $OS_FLAVOR
+fi
+
+if ! test -d /opt/go; then
+  install_golang $OS_FLAVOR
+else
+  export GOROOT=/opt/go
+fi
+
 build_hyperledger_core $OS_FLAVOR
-setup_behave
+
+if ! behave --version > /dev/null 2>&1; then
+  setup_behave
+fi
+
 post_build
 
 echo -e "\n\nThe Hyperledger Fabric and its supporting components have been successfully installed.\n"
