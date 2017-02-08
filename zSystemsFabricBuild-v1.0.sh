@@ -36,7 +36,7 @@ EOF
 # Install prerequisite packages for an RHEL Hyperledger build
 prereq_rhel() {
   echo -e "\nInstalling RHEL prerequisite packages\n"
-  yum -y -q install git gcc gcc-c++ wget tar python-setuptools python-devel device-mapper libtool-ltdl-devel
+  yum -y -q install git gcc gcc-c++ wget tar python-setuptools python-devel device-mapper libtool-ltdl-devel libffi-devel openssl-devel
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -49,7 +49,7 @@ prereq_rhel() {
 # Install prerequisite packages for an SLES Hyperledger build
 prereq_sles() {
   echo -e "\nInstalling SLES prerequisite packages\n"
-  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor  python-setuptools python-devel
+  zypper --non-interactive in git-core gcc make gcc-c++ patterns-sles-apparmor  python-setuptools python-devel libtool libffi48-devel libopenssl-devel
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -60,7 +60,7 @@ prereq_sles() {
 prereq_ubuntu() {
   echo -e "\nInstalling Ubuntu prerequisite packages\n"
   apt-get update
-  apt-get -y install build-essential git debootstrap python-setuptools python-dev alien
+  apt-get -y install build-essential git debootstrap python-setuptools python-dev alien libtool libffi-dev libssl-dev
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
@@ -248,8 +248,9 @@ setup_behave() {
   pip install -q --upgrade pip > /dev/null 2>&1
   pip install -q behave nose docker-compose > /dev/null 2>&1
   pip install -q -I flask==0.10.1 python-dateutil==2.2 pytz==2014.3 pyyaml==3.10 couchdb==1.0 flask-cors==2.0.1 requests==2.4.3 pyOpenSSL==16.2.0 pysha3==0.2.1 > /dev/null 2>&1
-  pip uninstall -yq six==1.3.0 > /dev/null 2>&1
-
+  if [ $OS_FLAVOR = "sles" ]; then
+    pip uninstall -yq six==1.3.0 > /dev/null 2>&1
+  fi
   # Install protobuf and grpcio
   git clone https://github.com/grpc/grpc.git
   cd grpc
