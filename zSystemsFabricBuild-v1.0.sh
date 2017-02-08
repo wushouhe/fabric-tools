@@ -36,10 +36,13 @@ EOF
 # Install prerequisite packages for an RHEL Hyperledger build
 prereq_rhel() {
   echo -e "\nInstalling RHEL prerequisite packages\n"
-  yum -y -q install git gcc gcc-c++ wget tar python-setuptools python-devel device-mapper
+  yum -y -q install git gcc gcc-c++ wget tar python-setuptools python-devel device-mapper libtool-ltdl-devel
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to install pre-requisite packages.\n"
     exit 1
+  fi
+  if [ ! -f /usr/bin/s390x-linux-gnu-gcc ]; then
+    ln -s /usr/bin/s390x-redhat-linux-gcc /usr/bin/s390x-linux-gnu-gcc
   fi
 }
 
