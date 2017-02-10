@@ -297,7 +297,7 @@ EOF
   fi
 
   # Add non-root user to docker group
-  BC_USER=`who am i | awk '{print $1}'`
+  BC_USER=`whoami | awk '{print $1}'`
   if [ $BC_USER != "root" ]; then
     usermod -aG docker $BC_USER
   fi
