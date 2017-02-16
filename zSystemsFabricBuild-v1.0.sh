@@ -27,7 +27,8 @@ The script will install the following components:
     - Golang
     - IBM Java 1.8
     - Nodejs 6.7.0
-    - Hyperledger Fabric core components
+    - Hyperledger Fabric core components (fabric, fabric-ca, and fabric-sdk-node)
+
 
 EOF
   exit 1
@@ -168,8 +169,8 @@ install_golang() {
 }
 
 # Build the Hyperledger Fabric peer components
-build_hyperledger_core() {
-  echo -e "\n*** build_hyperledger_core ***\n"
+build_hyperledger_fabric() {
+  echo -e "\n*** build_hyperledger_fabric ***\n"
   # Setup Environment Variables
   export GOPATH=$HOME/git
   export PATH=$GOROOT/bin:$PATH
@@ -187,7 +188,55 @@ build_hyperledger_core() {
   make native docker
 
   if [ $? != 0 ]; then
-    echo -e "\nERROR: Unable to build the Hyperledger Fabric components.\n"
+    echo -e "\nERROR: Unable to build the Hyperledger Fabric peer components.\n"
+    exit 1
+  fi
+
+  echo -e "*** DONE ***\n"
+}
+
+# Build the Hyperledger Fabric Membership Services components
+build_hyperledger_fabric-ca() {
+  echo -e "\n*** build_hyperledger_fabric-ca ***\n"
+
+  # Download latest Hyperledger Fabric codebase
+  if [ ! -d $GOPATH/src/github.com/hyperledger ]; then
+    mkdir -p $GOPATH/src/github.com/hyperledger
+  fi
+  cd $GOPATH/src/github.com/hyperledger
+  # Delete fabric directory, if it exists
+  rm -rf fabric-ca
+  git clone http://gerrit.hyperledger.org/r/fabric-ca
+
+  cd $GOPATH/src/github.com/hyperledger/fabric-ca
+  make fabric-ca fabric-ca-server fabric-ca-client docker
+
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to build the Hyperledger Membership Services components.\n"
+    exit 1
+  fi
+
+  echo -e "*** DONE ***\n"
+}
+
+# Build the Hyperledger Fabric Node SDK components
+build_hyperledger_fabric-sdk-node() {
+  echo -e "\n*** build_hyperledger_fabric-sdk-node ***\n"
+
+  # Download latest Hyperledger Fabric codebase
+  if [ ! -d $GOPATH/src/github.com/hyperledger ]; then
+    mkdir -p $GOPATH/src/github.com/hyperledger
+  fi
+  cd $GOPATH/src/github.com/hyperledger
+  # Delete fabric directory, if it exists
+  rm -rf fabric-sdk-node
+  git clone http://gerrit.hyperledger.org/r/fabric-sdk-node
+
+  cd $GOPATH/src/github.com/hyperledger/fabric-sdk-node
+  npm install gulp -g && npm install && gulp ca
+
+  if [ $? != 0 ]; then
+    echo -e "\nERROR: Unable to build the Hyperledger Node SDK components.\n"
     exit 1
   fi
 
@@ -297,9 +346,9 @@ EOF
   fi
 
   # Add non-root user to docker group
-  BC_USER=`whoami | awk '{print $1}'`
+  BC_USER=`whoami`
   if [ $BC_USER != "root" ]; then
-    usermod -aG docker $BC_USER
+    sudo usermod -aG docker $BC_USER
   fi
 
   # Cleanup files and Docker images and containers
@@ -354,7 +403,10 @@ else
   export GOROOT=/opt/go
 fi
 
-build_hyperledger_core $OS_FLAVOR
+build_hyperledger_fabric $OS_FLAVOR
+build_hyperledger_fabric-ca $OS_FLAVOR
+build_hyperledger_fabric-sdk-node $OS_FLAVOR
+
 
 if ! behave --version > /dev/null 2>&1; then
   setup_behave
