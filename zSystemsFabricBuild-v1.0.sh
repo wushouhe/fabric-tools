@@ -233,7 +233,7 @@ build_hyperledger_fabric-sdk-node() {
   git clone http://gerrit.hyperledger.org/r/fabric-sdk-node
 
   cd $GOPATH/src/github.com/hyperledger/fabric-sdk-node
-  npm install gulp -g && npm install && gulp ca
+  npm install && npm install -g gulp && npm install -g istanbul && gulp && gulp ca && rm -rf node_modules/fabric-ca-client && npm install
 
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to build the Hyperledger Node SDK components.\n"
