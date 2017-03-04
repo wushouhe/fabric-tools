@@ -275,7 +275,7 @@ install_nodejs() {
   echo -e "\n*** install_nodejs ***\n"
   cd /tmp
   wget -q https://nodejs.org/dist/v6.7.0/node-v6.7.0-linux-s390x.tar.gz
-  cd /usr/local && tar --strip-components 1 -xzf /tmp/node-v6.7.0-linux-s390x.tar.gz
+  cd /usr/local && tar --strip-components=1 -xzf /tmp/node-v6.7.0-linux-s390x.tar.gz
   echo -e "*** DONE ***\n"
 }
 
