@@ -14,5 +14,5 @@ The following components are installed:
 - Docker and supporting Hyperledger Fabric Docker images
 - Golang
 - IBM Java 1.8
-- Nodejs 6.7.0
+- Nodejs 6.9.5
 - Hyperledger Fabric core components
