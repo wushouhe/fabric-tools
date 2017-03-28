@@ -26,7 +26,7 @@ The script will install the following components:
     - Docker and supporting Hyperledger Fabric Docker images
     - Golang
     - IBM Java 1.8
-    - Nodejs 6.7.0
+    - Nodejs 6.9.5
     - Hyperledger Fabric core components (fabric, fabric-ca, and fabric-sdk-node)
 
 
@@ -209,7 +209,7 @@ build_hyperledger_fabric-ca() {
   git clone http://gerrit.hyperledger.org/r/fabric-ca
 
   cd $GOPATH/src/github.com/hyperledger/fabric-ca
-  make fabric-ca fabric-ca-server fabric-ca-client docker
+  make fabric-ca-server fabric-ca-client docker
 
   if [ $? != 0 ]; then
     echo -e "\nERROR: Unable to build the Hyperledger Membership Services components.\n"
@@ -274,8 +274,8 @@ install_java() {
 install_nodejs() {
   echo -e "\n*** install_nodejs ***\n"
   cd /tmp
-  wget -q https://nodejs.org/dist/v6.7.0/node-v6.7.0-linux-s390x.tar.gz
-  cd /usr/local && tar --strip-components=1 -xzf /tmp/node-v6.7.0-linux-s390x.tar.gz
+  wget -q https://nodejs.org/dist/v6.9.5/node-v6.9.5-linux-s390x.tar.gz
+  cd /usr/local && tar --strip-components=1 -xzf /tmp/node-v6.9.5-linux-s390x.tar.gz
   echo -e "*** DONE ***\n"
 }
 
